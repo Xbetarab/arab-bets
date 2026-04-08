@@ -20,7 +20,7 @@ function sportLabel(value: string | null): string | null {
 
 export default function PostCard({ post }: { post: Post }) {
   const profile = post.profiles;
-  const images = post.media_urls ?? (post.image_url ? [post.image_url] : []);
+  const images = post.media_urls ?? [];
 
   return (
     <article

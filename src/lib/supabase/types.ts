@@ -10,7 +10,6 @@ export type Post = {
   id: string;
   user_id: string;
   content: string;
-  image_url: string | null;
   media_urls: string[] | null;
   sport: string | null;
   likes_count: number;

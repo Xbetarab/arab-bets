@@ -10,7 +10,7 @@ async function loadPosts(): Promise<Post[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("*, profiles(*)")
+    .select("*, profiles:author_id(*)")
     .order("created_at", { ascending: false })
     .limit(50);
 

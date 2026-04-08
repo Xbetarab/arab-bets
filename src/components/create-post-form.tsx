@@ -70,7 +70,7 @@ export default function CreatePostForm({ userId }: { userId: string }) {
 
       // Insert post
       const { error: insertError } = await supabase.from("posts").insert({
-        user_id: userId,
+        author_id: userId,
         content: content.trim(),
         media_urls: mediaUrls.length > 0 ? mediaUrls : null,
         sport: sport || null,

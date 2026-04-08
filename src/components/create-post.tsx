@@ -72,9 +72,9 @@ export default function CreatePost({
 
       // Insert post
       const { error: insertError } = await supabase.from("posts").insert({
-        user_id: userId,
+        author_id: userId,
         content: content.trim(),
-        image_url: imageUrl,
+        media_urls: imageUrl ? [imageUrl] : [],
       });
 
       if (insertError) {

@@ -8,7 +8,7 @@ export type Profile = {
 
 export type Post = {
   id: string;
-  user_id: string;
+  author_id: string;
   content: string;
   media_urls: string[] | null;
   sport: string | null;

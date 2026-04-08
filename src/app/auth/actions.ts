@@ -43,8 +43,15 @@ export async function checkUsername(
     .eq("username", username.toLowerCase())
     .maybeSingle();
 
+  // ---- DEBUG: log exact error for Devin ----
   if (error) {
-    return { available: false, error: "حدث خطأ أثناء التحقق" };
+    console.error("[checkUsername] Supabase error:", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    return { available: false, error: "حدث خطأ أثناء التحقق من اسم المستخدم" };
   }
 
   return {
@@ -85,9 +92,11 @@ export async function signUp(
   }
 
   // ---- Check username uniqueness (server-side double check) ----
-  const { available } = await checkUsername(username);
+  const { available, error: usernameError } = await checkUsername(username);
   if (!available) {
-    return { fieldErrors: { username: "اسم المستخدم مستخدم بالفعل" } };
+    return {
+      fieldErrors: { username: usernameError || "اسم المستخدم مستخدم بالفعل" },
+    };
   }
 
   // ---- Supabase Auth sign up ----
@@ -105,6 +114,7 @@ export async function signUp(
   });
 
   if (error) {
+    console.error("[signUp] Auth error:", error.message);
     if (error.message.includes("already registered")) {
       return { fieldErrors: { email: "البريد الإلكتروني مسجل بالفعل" } };
     }

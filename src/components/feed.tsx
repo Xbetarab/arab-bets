@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Post } from "@/lib/supabase/types";
 import PostCard from "./post-card";
-import CreatePost from "./create-post";
+import Link from "next/link";
 
 async function loadPosts(): Promise<Post[]> {
   const supabase = createClient();
@@ -21,13 +21,6 @@ async function loadPosts(): Promise<Post[]> {
 export default function Feed({ userId }: { userId: string }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(() => {
-    loadPosts().then((p) => {
-      setPosts(p);
-      setLoading(false);
-    });
-  }, []);
 
   // Initial load + real-time subscription
   useEffect(() => {
@@ -60,9 +53,19 @@ export default function Feed({ userId }: { userId: string }) {
     };
   }, []);
 
+  // suppress unused var warning — userId reserved for future like/bookmark actions
+  void userId;
+
   return (
     <div className="space-y-4">
-      <CreatePost userId={userId} onPostCreated={refresh} />
+      {/* Quick post CTA */}
+      <Link
+        href="/create"
+        dir="rtl"
+        className="block bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-zinc-500 text-sm hover:border-emerald-600/30 transition-colors"
+      >
+        شارك رأيك أو توقعاتك...
+      </Link>
 
       {loading ? (
         <div className="flex justify-center py-12">

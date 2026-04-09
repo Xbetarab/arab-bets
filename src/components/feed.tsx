@@ -31,8 +31,9 @@ async function loadPosts(): Promise<Post[]> {
         .eq("post_id", post.id)
         .eq("is_approved", true),
     ]);
-    post.likes_count = likesCount ?? post.likes_count;
-    post.comments_count = commentsCount ?? post.comments_count;
+    // Use max of actual count vs column value to support admin-inflated counts
+    post.likes_count = Math.max(likesCount ?? 0, post.likes_count ?? 0);
+    post.comments_count = Math.max(commentsCount ?? 0, post.comments_count ?? 0);
   }
 
   return posts;

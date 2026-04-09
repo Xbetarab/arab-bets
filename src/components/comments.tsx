@@ -43,7 +43,7 @@ function CommentNode({
     if (!userId) return;
     // Optimistic update
     setLiked((prev) => !prev);
-    setLikesCount((prev) => prev + (liked ? -1 : 1));
+    setLikesCount((prev) => Math.max(0, prev + (liked ? -1 : 1)));
     startTransition(async () => {
       const result = await toggleCommentLike(comment.id);
       setLiked(result.liked);

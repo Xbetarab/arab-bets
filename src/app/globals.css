@@ -21,8 +21,15 @@ body {
 /* Comment threading lines (YouTube style, RTL) */
 .comment-thread {
   position: relative;
-  padding-right: 24px;
-  margin-right: 24px;
+  padding-right: 16px;
+  margin-right: 16px;
+}
+
+@media (min-width: 640px) {
+  .comment-thread {
+    padding-right: 24px;
+    margin-right: 24px;
+  }
 }
 
 .comment-thread::before {

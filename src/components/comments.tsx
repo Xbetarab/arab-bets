@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Comment } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
@@ -84,7 +84,7 @@ function CommentNode({
             <button
               onClick={handleLike}
               disabled={isPending || !userId}
-              className={`hover:text-red-400 transition-colors cursor-pointer disabled:cursor-default ${
+              className={`hover:text-red-400 transition-colors cursor-pointer disabled:cursor-default min-h-[44px] min-w-[44px] flex items-center justify-center ${
                 liked ? "text-red-400" : ""
               }`}
             >
@@ -93,7 +93,7 @@ function CommentNode({
             {userId && (
               <button
                 onClick={() => onReply(comment.id)}
-                className="hover:text-emerald-400 transition-colors cursor-pointer"
+                className="hover:text-emerald-400 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 رد
               </button>
@@ -118,9 +118,11 @@ function CommentNode({
 export default function CommentsSection({
   postId,
   userId,
+  forceOpen,
 }: {
   postId: string;
   userId: string | null;
+  forceOpen?: boolean;
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -128,6 +130,17 @@ export default function CommentsSection({
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Respond to forceOpen prop from parent (comment icon click)
+  useEffect(() => {
+    if (forceOpen && !loaded && !loading) {
+      loadComments();
+    } else if (forceOpen === false && loaded) {
+      setLoaded(false);
+      setComments([]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceOpen]);
 
   async function loadComments() {
     setLoading(true);
@@ -166,6 +179,7 @@ export default function CommentsSection({
       author_id: userId,
       content: newComment.trim(),
       parent_id: replyTo || null,
+      is_approved: true,
     });
     setNewComment("");
     setReplyTo(null);
@@ -216,12 +230,12 @@ export default function CommentsSection({
                   </button>
                 </div>
               )}
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 <input
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="أضف تعليقاً..."
-                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -232,7 +246,7 @@ export default function CommentsSection({
                 <button
                   onClick={handleSubmitComment}
                   disabled={submitting || !newComment.trim()}
-                  className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white text-xs px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px] shrink-0"
                 >
                   {submitting ? "..." : "إرسال"}
                 </button>

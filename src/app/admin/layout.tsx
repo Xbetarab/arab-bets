@@ -17,9 +17,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-zinc-950 flex">
-      {/* Sidebar */}
-      <aside className="w-56 border-l border-zinc-800 bg-zinc-950 p-4 space-y-2 shrink-0">
+    <div dir="rtl" className="min-h-screen bg-zinc-950 flex flex-col md:flex-row">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:block w-56 border-l border-zinc-800 bg-zinc-950 p-4 space-y-2 shrink-0">
         <Link
           href="/admin"
           className="block text-lg font-bold text-emerald-400 mb-6"
@@ -54,8 +54,43 @@ export default async function AdminLayout({
         </div>
       </aside>
 
+      {/* Mobile top bar */}
+      <div className="md:hidden border-b border-zinc-800 bg-zinc-950 px-4 py-3">
+        <div className="flex items-center justify-between mb-3">
+          <Link href="/admin" className="text-lg font-bold text-emerald-400">
+            لوحة التحكم
+          </Link>
+          <Link
+            href="/"
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors min-h-[44px] flex items-center"
+          >
+            ← العودة للموقع
+          </Link>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/moderation"
+            className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
+          >
+            المراجعة
+          </Link>
+          <Link
+            href="/admin/ghost"
+            className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
+          >
+            الشبحية
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
+          >
+            الإعدادات
+          </Link>
+        </div>
+      </div>
+
       {/* Main content */}
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-4 md:p-6">{children}</main>
     </div>
   );
 }

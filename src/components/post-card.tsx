@@ -25,6 +25,7 @@ export default function PostCard({
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
   const [isPending, startTransition] = useTransition();
+  const [showComments, setShowComments] = useState(false);
 
   function handleLike() {
     if (!userId) return;
@@ -100,12 +101,12 @@ export default function PostCard({
         <button
           onClick={handleLike}
           disabled={isPending || !userId}
-          className={`flex items-center gap-1.5 transition-colors text-xs cursor-pointer disabled:cursor-default ${
+          className={`flex items-center gap-1.5 transition-colors text-xs cursor-pointer disabled:cursor-default min-h-[44px] min-w-[44px] justify-center ${
             liked ? "text-red-400" : "text-zinc-500 hover:text-red-400"
           }`}
         >
           <svg
-            className="w-4 h-4"
+            className="w-5 h-5"
             fill={liked ? "currentColor" : "none"}
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -119,9 +120,12 @@ export default function PostCard({
           </svg>
           <span>{likesCount}</span>
         </button>
-        <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-1.5 text-zinc-500 hover:text-emerald-400 text-xs transition-colors cursor-pointer min-h-[44px] min-w-[44px] justify-center"
+        >
           <svg
-            className="w-4 h-4"
+            className="w-5 h-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -134,11 +138,11 @@ export default function PostCard({
             />
           </svg>
           <span>{post.comments_count ?? 0}</span>
-        </div>
+        </button>
       </div>
 
       {/* Comments section */}
-      <CommentsSection postId={post.id} userId={userId} />
+      <CommentsSection postId={post.id} userId={userId} forceOpen={showComments} />
     </article>
   );
 }

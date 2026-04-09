@@ -59,10 +59,13 @@ export default function GhostPage() {
         setNewDisplayName("");
         setNewAvatarUrl("");
         loadProfiles();
-      } catch (err) {
+      } catch (err: unknown) {
+        const errorObj = err as { message?: string; code?: string; details?: string; hint?: string };
+        const detail = [errorObj.message, errorObj.code, errorObj.details, errorObj.hint].filter(Boolean).join(" | ");
+        console.error("Ghost profile error:", err);
         setMessage({
           type: "error",
-          text: err instanceof Error ? err.message : "فشل إنشاء الحساب",
+          text: detail || "فشل إنشاء الحساب",
         });
       }
     });
@@ -82,10 +85,13 @@ export default function GhostPage() {
         setMessage({ type: "success", text: "تم نشر التعليق الشبحي بنجاح" });
         setCommentContent("");
         setParentId("");
-      } catch (err) {
+      } catch (err: unknown) {
+        const errorObj = err as { message?: string; code?: string; details?: string; hint?: string };
+        const detail = [errorObj.message, errorObj.code, errorObj.details, errorObj.hint].filter(Boolean).join(" | ");
+        console.error("Ghost comment error:", err);
         setMessage({
           type: "error",
-          text: err instanceof Error ? err.message : "فشل نشر التعليق",
+          text: detail || "فشل نشر التعليق",
         });
       }
     });

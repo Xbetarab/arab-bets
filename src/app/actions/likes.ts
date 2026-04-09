@@ -20,29 +20,22 @@ export async function togglePostLike(postId: string) {
     .maybeSingle();
 
   if (existing) {
+    // Unlike — decrement but never below 0
     await supabase.from("likes").delete().eq("id", existing.id);
+    await supabase.rpc("decrement_post_likes", { p_post_id: postId });
+    revalidatePath("/");
+    return { liked: false };
   } else {
+    // Like — increment
     await supabase.from("likes").insert({
       user_id: user.id,
       target_id: postId,
       target_type: "post",
     });
+    await supabase.rpc("increment_post_likes", { p_post_id: postId });
+    revalidatePath("/");
+    return { liked: true };
   }
-
-  // Count actual likes and update the post's likes_count
-  const { count } = await supabase
-    .from("likes")
-    .select("id", { count: "exact", head: true })
-    .eq("target_id", postId)
-    .eq("target_type", "post");
-
-  await supabase
-    .from("posts")
-    .update({ likes_count: count ?? 0 })
-    .eq("id", postId);
-
-  revalidatePath("/");
-  return { liked: !existing };
 }
 
 export async function toggleCommentLike(commentId: string) {
@@ -60,25 +53,19 @@ export async function toggleCommentLike(commentId: string) {
     .maybeSingle();
 
   if (existing) {
+    // Unlike — decrement but never below 0
     await supabase.from("comment_likes").delete().eq("id", existing.id);
+    await supabase.rpc("decrement_comment_likes", { p_comment_id: commentId });
+    revalidatePath("/");
+    return { liked: false };
   } else {
+    // Like — increment
     await supabase.from("comment_likes").insert({
       user_id: user.id,
       comment_id: commentId,
     });
+    await supabase.rpc("increment_comment_likes", { p_comment_id: commentId });
+    revalidatePath("/");
+    return { liked: true };
   }
-
-  // Count actual likes and update the comment's likes_count
-  const { count } = await supabase
-    .from("comment_likes")
-    .select("id", { count: "exact", head: true })
-    .eq("comment_id", commentId);
-
-  await supabase
-    .from("comments")
-    .update({ likes_count: count ?? 0 })
-    .eq("id", commentId);
-
-  revalidatePath("/");
-  return { liked: !existing };
 }

@@ -15,28 +15,7 @@ async function loadPosts(): Promise<Post[]> {
     .limit(50);
 
   if (error || !data) return [];
-  const posts = data as unknown as Post[];
-
-  // Count actual likes and comments from their tables (RLS may prevent counter column updates)
-  for (const post of posts) {
-    const [{ count: likesCount }, { count: commentsCount }] = await Promise.all([
-      supabase
-        .from("likes")
-        .select("id", { count: "exact", head: true })
-        .eq("target_id", post.id)
-        .eq("target_type", "post"),
-      supabase
-        .from("comments")
-        .select("id", { count: "exact", head: true })
-        .eq("post_id", post.id)
-        .eq("is_approved", true),
-    ]);
-    // Use max of actual count vs column value to support admin-inflated counts
-    post.likes_count = Math.max(likesCount ?? 0, post.likes_count ?? 0);
-    post.comments_count = Math.max(commentsCount ?? 0, post.comments_count ?? 0);
-  }
-
-  return posts;
+  return data as unknown as Post[];
 }
 
 export default function Feed({ userId }: { userId: string | null }) {

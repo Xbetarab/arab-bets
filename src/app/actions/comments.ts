@@ -27,14 +27,8 @@ export async function createComment(
     throw error;
   }
 
-  // Increment comments_count on the post
-  const { data: post } = await supabase
-    .from("posts")
-    .select("comments_count")
-    .eq("id", postId)
-    .single();
-  const newCount = (post?.comments_count ?? 0) + 1;
-  await supabase.from("posts").update({ comments_count: newCount }).eq("id", postId);
+  // Increment comments_count on the post (never recounts, preserves admin-inflated values)
+  await supabase.rpc("increment_post_comments", { p_post_id: postId });
 
   revalidatePath("/");
   return { success: true };

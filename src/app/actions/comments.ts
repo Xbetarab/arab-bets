@@ -27,6 +27,15 @@ export async function createComment(
     throw error;
   }
 
+  // Increment comments_count on the post
+  const { data: post } = await supabase
+    .from("posts")
+    .select("comments_count")
+    .eq("id", postId)
+    .single();
+  const newCount = (post?.comments_count ?? 0) + 1;
+  await supabase.from("posts").update({ comments_count: newCount }).eq("id", postId);
+
   revalidatePath("/");
   return { success: true };
 }

@@ -18,7 +18,7 @@ async function loadPosts(): Promise<Post[]> {
   return data as unknown as Post[];
 }
 
-export default function Feed({ userId }: { userId: string }) {
+export default function Feed({ userId }: { userId: string | null }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,19 +53,28 @@ export default function Feed({ userId }: { userId: string }) {
     };
   }, []);
 
-  // suppress unused var warning — userId reserved for future like/bookmark actions
-  void userId;
-
   return (
     <div className="space-y-4">
       {/* Quick post CTA */}
-      <Link
-        href="/create"
-        dir="rtl"
-        className="block bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-zinc-500 text-sm hover:border-emerald-600/30 transition-colors"
-      >
-        شارك رأيك أو توقعاتك...
-      </Link>
+      {userId ? (
+        <Link
+          href="/create"
+          dir="rtl"
+          className="block bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-zinc-500 text-sm hover:border-emerald-600/30 transition-colors"
+        >
+          شارك رأيك أو توقعاتك...
+        </Link>
+      ) : (
+        <div
+          dir="rtl"
+          className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-zinc-500 text-sm"
+        >
+          <Link href="/auth/login" className="text-emerald-400 hover:underline">
+            سجل دخول
+          </Link>{" "}
+          لمشاركة رأيك أو توقعاتك
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -76,7 +85,9 @@ export default function Feed({ userId }: { userId: string }) {
           لا توجد منشورات حتى الآن. كن أول من ينشر!
         </div>
       ) : (
-        posts.map((post) => <PostCard key={post.id} post={post} />)
+        posts.map((post) => (
+          <PostCard key={post.id} post={post} userId={userId} />
+        ))
       )}
     </div>
   );

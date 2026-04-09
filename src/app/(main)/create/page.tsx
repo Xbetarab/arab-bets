@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import CreatePostForm from "@/components/create-post-form";
 
 export const metadata = {
-  title: "نشر جديد | X9 Bet",
+  title: "نشر جديد | arabtips",
 };
 
 export default async function CreatePostPage() {

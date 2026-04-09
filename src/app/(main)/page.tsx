@@ -8,7 +8,5 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return null;
-
-  return <Feed userId={user.id} />;
+  return <Feed userId={user?.id ?? null} />;
 }

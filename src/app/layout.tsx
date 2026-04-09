@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "X9 Bet | مجتمع المراهنين العرب",
+  title: "arabtips | مجتمع المراهنين العرب",
   description: "المنصة الاجتماعية لمجتمع المراهنين العرب",
 };
 

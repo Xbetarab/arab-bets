@@ -14,8 +14,22 @@ export type Post = {
   sport: string | null;
   likes_count: number;
   comments_count: number;
+  is_approved: boolean;
   created_at: string;
   profiles: Profile;
+};
+
+export type Comment = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  parent_id: string | null;
+  content: string;
+  likes_count: number;
+  is_approved: boolean;
+  created_at: string;
+  profiles: Pick<Profile, "username" | "display_name" | "avatar_url">;
+  children?: Comment[];
 };
 
 export const SPORTS = [

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -16,11 +17,13 @@ async function assertAdmin() {
 export async function approvePost(postId: string) {
   const supabase = await assertAdmin();
   await supabase.from("posts").update({ is_approved: true }).eq("id", postId);
+  revalidatePath("/");
 }
 
 export async function rejectPost(postId: string) {
   const supabase = await assertAdmin();
   await supabase.from("posts").delete().eq("id", postId);
+  revalidatePath("/");
 }
 
 export async function approveComment(commentId: string) {
@@ -29,11 +32,13 @@ export async function approveComment(commentId: string) {
     .from("comments")
     .update({ is_approved: true })
     .eq("id", commentId);
+  revalidatePath("/");
 }
 
 export async function rejectComment(commentId: string) {
   const supabase = await assertAdmin();
   await supabase.from("comments").delete().eq("id", commentId);
+  revalidatePath("/");
 }
 
 export async function updateAutoApprove(
@@ -41,7 +46,7 @@ export async function updateAutoApprove(
   commentsAuto: boolean
 ) {
   const supabase = await assertAdmin();
-  await supabase
+  const { error } = await supabase
     .from("app_settings")
     .update({
       value: {
@@ -50,6 +55,18 @@ export async function updateAutoApprove(
       },
     })
     .eq("key", "moderation");
+
+  if (error) console.error("settings update failed:", error);
+
+  // Re-fetch and confirm
+  const { data: confirm } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "moderation")
+    .maybeSingle();
+
+  revalidatePath("/admin");
+  return confirm?.value as { auto_approve_posts: boolean; auto_approve_comments: boolean } | null;
 }
 
 export async function createGhostProfile(
@@ -65,6 +82,39 @@ export async function createGhostProfile(
   });
   if (error) throw error;
   return data;
+}
+
+export async function adminSetPostCounts(
+  postId: string,
+  likesCount: number,
+  commentsCount: number
+) {
+  const supabase = await assertAdmin();
+  const { error } = await supabase
+    .from("posts")
+    .update({ likes_count: likesCount, comments_count: commentsCount })
+    .eq("id", postId);
+  if (error) {
+    console.error("adminSetPostCounts failed:", error);
+    throw error;
+  }
+  revalidatePath("/");
+}
+
+export async function adminSetCommentLikes(
+  commentId: string,
+  likesCount: number
+) {
+  const supabase = await assertAdmin();
+  const { error } = await supabase
+    .from("comments")
+    .update({ likes_count: likesCount })
+    .eq("id", commentId);
+  if (error) {
+    console.error("adminSetCommentLikes failed:", error);
+    throw error;
+  }
+  revalidatePath("/");
 }
 
 export async function createGhostComment(

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import type { Post } from "@/lib/supabase/types";
 import { SPORTS } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
 import { Linkify } from "@/lib/linkify";
 import { togglePostLike } from "@/app/actions/likes";
+import { createClient } from "@/lib/supabase/client";
 import CommentsSection from "./comments";
 
 function sportLabel(value: string | null): string | null {
@@ -24,16 +25,39 @@ export default function PostCard({
   const images = post.media_urls ?? [];
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count ?? 0);
   const [isPending, startTransition] = useTransition();
   const [showComments, setShowComments] = useState(false);
 
+  // Check if user already liked this post on mount
+  useEffect(() => {
+    if (!userId) return;
+    const supabase = createClient();
+    supabase
+      .from("likes")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("target_id", post.id)
+      .eq("target_type", "post")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setLiked(true);
+      });
+  }, [userId, post.id]);
+
   function handleLike() {
     if (!userId) return;
+    // Optimistic update
+    setLiked((prev) => !prev);
+    setLikesCount((prev) => prev + (liked ? -1 : 1));
     startTransition(async () => {
       const result = await togglePostLike(post.id);
       setLiked(result.liked);
-      setLikesCount((prev) => prev + (result.liked ? 1 : -1));
     });
+  }
+
+  function onCommentsCountChange(count: number) {
+    setCommentsCount(count);
   }
 
   return (
@@ -137,12 +161,12 @@ export default function PostCard({
               d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"
             />
           </svg>
-          <span>{post.comments_count ?? 0}</span>
+          <span>{commentsCount}</span>
         </button>
       </div>
 
       {/* Comments section */}
-      <CommentsSection postId={post.id} userId={userId} forceOpen={showComments} />
+      <CommentsSection postId={post.id} userId={userId} forceOpen={showComments} onCommentsCountChange={onCommentsCountChange} />
     </article>
   );
 }

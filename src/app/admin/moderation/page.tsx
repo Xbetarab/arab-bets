@@ -108,10 +108,14 @@ export default function ModerationPage() {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
     startTransition(async () => {
-      await updateAutoApprove(
+      const confirmed = await updateAutoApprove(
         newSettings.auto_approve_posts,
         newSettings.auto_approve_comments
       );
+      // Re-sync state with what DB actually has
+      if (confirmed) {
+        setSettings(confirmed);
+      }
     });
   }
 

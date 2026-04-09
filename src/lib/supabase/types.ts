@@ -30,6 +30,7 @@ export type Comment = {
   created_at: string;
   profiles: Pick<Profile, "username" | "display_name" | "avatar_url">;
   children?: Comment[];
+  user_has_liked?: boolean;
 };
 
 export const SPORTS = [

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Comment } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toggleCommentLike } from "@/app/actions/likes";
+import { createComment } from "@/app/actions/comments";
 
 function buildCommentTree(comments: Comment[]): Comment[] {
   const map = new Map<string, Comment>();
@@ -27,28 +28,25 @@ function CommentNode({
   comment,
   depth = 0,
   userId,
-  postId,
   onReply,
 }: {
   comment: Comment;
   depth?: number;
   userId: string | null;
-  postId: string;
   onReply: (parentId: string) => void;
 }) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(comment.user_has_liked ?? false);
   const [likesCount, setLikesCount] = useState(comment.likes_count);
   const [isPending, startTransition] = useTransition();
 
-  // suppress unused var warnings
-  void postId;
-
   function handleLike() {
     if (!userId) return;
+    // Optimistic update
+    setLiked((prev) => !prev);
+    setLikesCount((prev) => prev + (liked ? -1 : 1));
     startTransition(async () => {
       const result = await toggleCommentLike(comment.id);
       setLiked(result.liked);
-      setLikesCount((prev) => prev + (result.liked ? 1 : -1));
     });
   }
 
@@ -84,11 +82,24 @@ function CommentNode({
             <button
               onClick={handleLike}
               disabled={isPending || !userId}
-              className={`hover:text-red-400 transition-colors cursor-pointer disabled:cursor-default min-h-[44px] min-w-[44px] flex items-center justify-center ${
+              className={`flex items-center gap-1 hover:text-red-400 transition-colors cursor-pointer disabled:cursor-default min-h-[44px] min-w-[44px] justify-center ${
                 liked ? "text-red-400" : ""
               }`}
             >
-              {liked ? "❤️" : "🤍"} {likesCount}
+              <svg
+                className="w-4 h-4"
+                fill={liked ? "currentColor" : "none"}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                />
+              </svg>
+              <span>{likesCount}</span>
             </button>
             {userId && (
               <button
@@ -107,7 +118,6 @@ function CommentNode({
           comment={child}
           depth={depth + 1}
           userId={userId}
-          postId={postId}
           onReply={onReply}
         />
       ))}
@@ -119,10 +129,12 @@ export default function CommentsSection({
   postId,
   userId,
   forceOpen,
+  onCommentsCountChange,
 }: {
   postId: string;
   userId: string | null;
   forceOpen?: boolean;
+  onCommentsCountChange?: (count: number) => void;
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -130,7 +142,6 @@ export default function CommentsSection({
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
   // Respond to forceOpen prop from parent (comment icon click)
   useEffect(() => {
     if (forceOpen && !loaded && !loading) {
@@ -145,17 +156,38 @@ export default function CommentsSection({
   async function loadComments() {
     setLoading(true);
     const supabase = createClient();
+
+    // Fetch comments sorted by likes_count DESC, then created_at ASC
     const { data } = await supabase
       .from("comments")
       .select(
         "*, profiles:author_id(username, display_name, avatar_url)"
       )
       .eq("post_id", postId)
-      .order("likes_count", { ascending: false });
+      .order("likes_count", { ascending: false })
+      .order("created_at", { ascending: true });
 
-    const tree = buildCommentTree(
-      (data as unknown as Comment[]) ?? []
-    );
+    const rawComments = (data as unknown as Comment[]) ?? [];
+
+    // Check which comments the current user has liked
+    if (userId && rawComments.length > 0) {
+      const commentIds = rawComments.map((c) => c.id);
+      const { data: likedData } = await supabase
+        .from("comment_likes")
+        .select("comment_id")
+        .eq("user_id", userId)
+        .in("comment_id", commentIds);
+
+      const likedSet = new Set((likedData ?? []).map((l: { comment_id: string }) => l.comment_id));
+      rawComments.forEach((c) => {
+        c.user_has_liked = likedSet.has(c.id);
+      });
+    }
+
+    // Update comment count as fallback
+    onCommentsCountChange?.(rawComments.length);
+
+    const tree = buildCommentTree(rawComments);
     setComments(tree);
     setLoaded(true);
     setLoading(false);
@@ -173,18 +205,15 @@ export default function CommentsSection({
   async function handleSubmitComment() {
     if (!userId || !newComment.trim()) return;
     setSubmitting(true);
-    const supabase = createClient();
-    await supabase.from("comments").insert({
-      post_id: postId,
-      author_id: userId,
-      content: newComment.trim(),
-      parent_id: replyTo || null,
-      is_approved: true,
-    });
-    setNewComment("");
-    setReplyTo(null);
+    try {
+      await createComment(postId, newComment.trim(), replyTo || null);
+      setNewComment("");
+      setReplyTo(null);
+      await loadComments();
+    } catch (err) {
+      console.error("Failed to submit comment:", err);
+    }
     setSubmitting(false);
-    loadComments();
   }
 
   function handleReply(parentId: string) {
@@ -210,7 +239,6 @@ export default function CommentsSection({
                 key={c.id}
                 comment={c}
                 userId={userId}
-                postId={postId}
                 onReply={handleReply}
               />
             ))

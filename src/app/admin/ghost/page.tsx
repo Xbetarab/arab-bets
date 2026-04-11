@@ -12,8 +12,22 @@ type GhostProfile = {
   avatar_url: string | null;
 };
 
+type PostOption = {
+  id: string;
+  content: string;
+  created_at: string;
+  profiles: { display_name: string } | null;
+};
+
+function postPreview(p: PostOption): string {
+  const author = p.profiles?.display_name ?? "";
+  const text = p.content?.slice(0, 60) || "(بدون محتوى)";
+  return `${author}: ${text}${p.content?.length > 60 ? "..." : ""}`;
+}
+
 export default function GhostPage() {
   const [profiles, setProfiles] = useState<GhostProfile[]>([]);
+  const [posts, setPosts] = useState<PostOption[]>([]);
   const [selectedProfile, setSelectedProfile] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -33,7 +47,6 @@ export default function GhostPage() {
 
   async function loadProfiles() {
     const supabase = createClient();
-    // Fetch all profiles — admin can pick any as ghost
     const { data } = await supabase
       .from("profiles")
       .select("id, username, display_name, avatar_url")
@@ -42,8 +55,19 @@ export default function GhostPage() {
     setProfiles((data as GhostProfile[]) ?? []);
   }
 
+  async function loadPosts() {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("posts")
+      .select("id, content, created_at, profiles:author_id(display_name)")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setPosts((data as unknown as PostOption[]) ?? []);
+  }
+
   useEffect(() => {
     loadProfiles();
+    loadPosts();
   }, []);
 
   function handleCreateGhost() {
@@ -74,7 +98,7 @@ export default function GhostPage() {
   }
 
   function handlePostComment() {
-    if (!selectedProfile || !postId.trim() || !commentContent.trim()) return;
+    if (!selectedProfile || !postId || !commentContent.trim()) return;
     setMessage(null);
     startTransition(async () => {
       try {
@@ -173,27 +197,32 @@ export default function GhostPage() {
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs text-zinc-500">معرف المنشور</label>
-            <input
-              value={postId}
-              onChange={(e) => setPostId(e.target.value)}
-              placeholder="Post ID (UUID)"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs text-zinc-500">
-              معرف التعليق الأب (اختياري)
-            </label>
-            <input
-              value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
-              placeholder="Parent comment ID"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label className="text-xs text-zinc-500">اختر المنشور</label>
+          <select
+            value={postId}
+            onChange={(e) => setPostId(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer"
+          >
+            <option value="">اختر منشور...</option>
+            {posts.map((p) => (
+              <option key={p.id} value={p.id}>
+                {postPreview(p)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs text-zinc-500">
+            معرف التعليق الأب (اختياري)
+          </label>
+          <input
+            value={parentId}
+            onChange={(e) => setParentId(e.target.value)}
+            placeholder="Parent comment ID"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          />
         </div>
 
         <TimeOffsetSelect value={timeOffset} onChange={setTimeOffset} />
@@ -211,7 +240,7 @@ export default function GhostPage() {
           disabled={
             isPending ||
             !selectedProfile ||
-            !postId.trim() ||
+            !postId ||
             !commentContent.trim()
           }
           className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"

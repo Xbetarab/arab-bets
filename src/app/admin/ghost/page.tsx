@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { createGhostProfile, createGhostComment } from "../actions";
+import TimeOffsetSelect, { computeTimestamp } from "@/components/time-offset-select";
 
 type GhostProfile = {
   id: string;
@@ -25,6 +26,7 @@ export default function GhostPage() {
   const [postId, setPostId] = useState("");
   const [commentContent, setCommentContent] = useState("");
   const [parentId, setParentId] = useState("");
+  const [timeOffset, setTimeOffset] = useState(0);
 
   // Feedback
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -76,15 +78,18 @@ export default function GhostPage() {
     setMessage(null);
     startTransition(async () => {
       try {
+        const ts = timeOffset > 0 ? computeTimestamp(timeOffset) : undefined;
         await createGhostComment(
           selectedProfile,
           postId.trim(),
           commentContent.trim(),
-          parentId.trim() || undefined
+          parentId.trim() || undefined,
+          ts
         );
         setMessage({ type: "success", text: "تم نشر التعليق الشبحي بنجاح" });
         setCommentContent("");
         setParentId("");
+        setTimeOffset(0);
       } catch (err: unknown) {
         const errorObj = err as { message?: string; code?: string; details?: string; hint?: string };
         const detail = [errorObj.message, errorObj.code, errorObj.details, errorObj.hint].filter(Boolean).join(" | ");
@@ -190,6 +195,8 @@ export default function GhostPage() {
             />
           </div>
         </div>
+
+        <TimeOffsetSelect value={timeOffset} onChange={setTimeOffset} />
 
         <textarea
           value={commentContent}

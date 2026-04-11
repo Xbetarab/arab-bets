@@ -121,7 +121,8 @@ export async function createGhostComment(
   ghostProfileId: string,
   postId: string,
   content: string,
-  parentId?: string
+  parentId?: string,
+  customTimestamp?: string
 ) {
   const supabase = await assertAdmin();
   const { data, error } = await supabase.rpc("admin_ghost_comment", {
@@ -131,5 +132,44 @@ export async function createGhostComment(
     p_parent_id: parentId || null,
   });
   if (error) throw error;
+
+  // If custom timestamp provided, update the comment's created_at
+  if (customTimestamp && data) {
+    const commentId = typeof data === "string" ? data : (data as { id?: string })?.id;
+    if (commentId) {
+      await supabase
+        .from("comments")
+        .update({ created_at: customTimestamp })
+        .eq("id", commentId);
+    }
+  }
+
+  revalidatePath("/");
+  return data;
+}
+
+export async function adminCreatePost(
+  content: string,
+  sport: string | null,
+  authorId: string,
+  customTimestamp?: string
+) {
+  const supabase = await assertAdmin();
+  const insertData: Record<string, unknown> = {
+    content,
+    sport: sport || null,
+    author_id: authorId,
+    is_approved: true,
+  };
+  if (customTimestamp) {
+    insertData.created_at = customTimestamp;
+  }
+  const { data, error } = await supabase
+    .from("posts")
+    .insert(insertData)
+    .select("id")
+    .single();
+  if (error) throw error;
+  revalidatePath("/");
   return data;
 }

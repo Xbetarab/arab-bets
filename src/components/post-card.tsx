@@ -8,6 +8,7 @@ import { Linkify } from "@/lib/linkify";
 import { togglePostLike } from "@/app/actions/likes";
 import { createClient } from "@/lib/supabase/client";
 import CommentsSection from "./comments";
+import Link from "next/link";
 
 function sportLabel(value: string | null): string | null {
   if (!value) return null;
@@ -17,9 +18,11 @@ function sportLabel(value: string | null): string | null {
 export default function PostCard({
   post,
   userId,
+  permalink = false,
 }: {
   post: Post;
   userId: string | null;
+  permalink?: boolean;
 }) {
   const profile = post.profiles;
   const images = post.media_urls ?? [];
@@ -27,7 +30,8 @@ export default function PostCard({
   const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
   const [commentsCount, setCommentsCount] = useState(post.comments_count ?? 0);
   const [isPending, startTransition] = useTransition();
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(permalink);
+  const [shareToast, setShareToast] = useState(false);
 
   // Check if user already liked this post on mount
   useEffect(() => {
@@ -60,6 +64,21 @@ export default function PostCard({
     setCommentsCount(count);
   }
 
+  async function handleShare() {
+    const url = `${window.location.origin}/post/${post.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "arabtips", url });
+      } catch {
+        // user cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2000);
+    }
+  }
+
   return (
     <article
       dir="rtl"
@@ -85,7 +104,16 @@ export default function PostCard({
           </p>
           <p className="text-zinc-500 text-xs">
             @{profile?.username || "unknown"} &middot;{" "}
-            {formatRelativeTime(post.created_at)}
+            {permalink ? (
+              <span>{formatRelativeTime(post.created_at)}</span>
+            ) : (
+              <Link
+                href={`/post/${post.id}`}
+                className="hover:text-emerald-400 transition-colors"
+              >
+                {formatRelativeTime(post.created_at)}
+              </Link>
+            )}
           </p>
         </div>
       </div>
@@ -99,9 +127,15 @@ export default function PostCard({
 
       {/* Content */}
       {post.content && (
-        <p className="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
-          <Linkify text={post.content} />
-        </p>
+        <div className="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
+          {permalink ? (
+            <Linkify text={post.content} />
+          ) : (
+            <Link href={`/post/${post.id}`} className="block">
+              <Linkify text={post.content} />
+            </Link>
+          )}
+        </div>
       )}
 
       {/* Media images */}
@@ -120,8 +154,8 @@ export default function PostCard({
         </div>
       )}
 
-      {/* Footer: likes + comments */}
-      <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/50">
+      {/* Footer: likes + comments + share */}
+      <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/50 relative">
         <button
           onClick={handleLike}
           disabled={isPending || !userId}
@@ -163,6 +197,32 @@ export default function PostCard({
           </svg>
           <span>{commentsCount}</span>
         </button>
+        {/* Share button */}
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 text-zinc-500 hover:text-emerald-400 text-xs transition-colors cursor-pointer min-h-[44px] min-w-[44px] justify-center mr-auto"
+          aria-label="مشاركة"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.935-2.186 2.25 2.25 0 0 0-3.935 2.186Z"
+            />
+          </svg>
+        </button>
+        {/* Copy toast */}
+        {shareToast && (
+          <div className="absolute left-2 bottom-full mb-2 bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+            تم نسخ الرابط
+          </div>
+        )}
       </div>
 
       {/* Comments section */}

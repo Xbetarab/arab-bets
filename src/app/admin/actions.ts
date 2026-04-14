@@ -1,17 +1,22 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Verify the caller is the admin, then return the service-role client
+ * that bypasses RLS. This is the ONLY way admin operations should run.
+ */
 async function assertAdmin() {
-  const supabase = await createClient();
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user || user.email !== "uomankotd@gmail.com") {
     throw new Error("Unauthorized");
   }
-  return supabase;
+  return createAdminClient();
 }
 
 export async function approvePost(postId: string) {
@@ -67,6 +72,69 @@ export async function updateAutoApprove(
 
   revalidatePath("/admin");
   return confirm?.value as { auto_approve_posts: boolean; auto_approve_comments: boolean } | null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Moderation queue — fetches ALL pending content (bypasses RLS)      */
+/* ------------------------------------------------------------------ */
+
+export type PendingPost = {
+  id: string;
+  content: string;
+  created_at: string;
+  media_urls: string[] | null;
+  sport: string | null;
+  profiles: { username: string; display_name: string; avatar_url: string | null };
+};
+
+export type PendingComment = {
+  id: string;
+  content: string;
+  created_at: string;
+  post_id: string;
+  parent_id: string | null;
+  profiles: { username: string; display_name: string; avatar_url: string | null };
+  post: { content: string } | null;
+};
+
+export async function fetchPendingContent() {
+  const supabase = await assertAdmin();
+
+  const [postsRes, commentsRes, settingsRes] = await Promise.all([
+    supabase
+      .from("posts")
+      .select(
+        "id, content, created_at, media_urls, sport, profiles:author_id(username, display_name, avatar_url)"
+      )
+      .eq("is_approved", false)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("comments")
+      .select(
+        "id, content, created_at, post_id, parent_id, profiles:author_id(username, display_name, avatar_url), post:post_id(content)"
+      )
+      .eq("is_approved", false)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "moderation")
+      .maybeSingle(),
+  ]);
+
+  if (postsRes.error) console.error("fetchPendingPosts error:", postsRes.error);
+  if (commentsRes.error) console.error("fetchPendingComments error:", commentsRes.error);
+
+  const settings = settingsRes.data?.value as {
+    auto_approve_posts: boolean;
+    auto_approve_comments: boolean;
+  } | null;
+
+  return {
+    posts: (postsRes.data ?? []) as unknown as PendingPost[],
+    comments: (commentsRes.data ?? []) as unknown as PendingComment[],
+    settings: settings ?? { auto_approve_posts: true, auto_approve_comments: true },
+  };
 }
 
 export async function createGhostProfile(

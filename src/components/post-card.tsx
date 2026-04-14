@@ -6,9 +6,11 @@ import { SPORTS } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
 import { Linkify } from "@/lib/linkify";
 import { togglePostLike } from "@/app/actions/likes";
+import { deletePost } from "@/app/actions/posts";
 import { createClient } from "@/lib/supabase/client";
 import CommentsSection from "./comments";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function sportLabel(value: string | null): string | null {
   if (!value) return null;
@@ -32,6 +34,10 @@ export default function PostCard({
   const [isPending, startTransition] = useTransition();
   const [showComments, setShowComments] = useState(permalink);
   const [shareToast, setShareToast] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
+  const isAuthor = userId === post.author_id;
 
   // Check if user already liked this post on mount
   useEffect(() => {
@@ -116,6 +122,43 @@ export default function PostCard({
             )}
           </p>
         </div>
+        {/* Options menu for author */}
+        {isAuthor && (
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer p-1 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="خيارات"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+            {showMenu && (
+              <div className="absolute left-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-10 min-w-[120px]">
+                <button
+                  onClick={async () => {
+                    setShowMenu(false);
+                    if (!confirm("هل أنت متأكد من حذف هذا المنشور؟")) return;
+                    setDeleting(true);
+                    try {
+                      await deletePost(post.id);
+                      router.push("/");
+                      router.refresh();
+                    } catch (err) {
+                      console.error(err);
+                      setDeleting(false);
+                    }
+                  }}
+                  disabled={deleting}
+                  className="w-full text-right px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-700/50 transition-colors cursor-pointer rounded-lg disabled:opacity-50"
+                >
+                  {deleting ? "جاري الحذف..." : "حذف المنشور"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sport tag */}

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Comment } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toggleCommentLike } from "@/app/actions/likes";
-import { createComment } from "@/app/actions/comments";
+import { createComment, deleteComment } from "@/app/actions/comments";
 
 function buildCommentTree(comments: Comment[]): Comment[] {
   const map = new Map<string, Comment>();
@@ -29,15 +29,19 @@ function CommentNode({
   depth = 0,
   userId,
   onReply,
+  onDelete,
 }: {
   comment: Comment;
   depth?: number;
   userId: string | null;
   onReply: (parentId: string) => void;
+  onDelete: () => void;
 }) {
   const [liked, setLiked] = useState(comment.user_has_liked ?? false);
   const [likesCount, setLikesCount] = useState(comment.likes_count);
   const [isPending, startTransition] = useTransition();
+  const [deleting, setDeleting] = useState(false);
+  const isAuthor = userId === comment.author_id;
 
   function handleLike() {
     if (!userId) return;
@@ -109,6 +113,25 @@ function CommentNode({
                 رد
               </button>
             )}
+            {isAuthor && (
+              <button
+                onClick={async () => {
+                  if (!confirm("هل أنت متأكد من حذف هذا التعليق؟")) return;
+                  setDeleting(true);
+                  try {
+                    await deleteComment(comment.id);
+                    onDelete();
+                  } catch (err) {
+                    console.error(err);
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+                className="text-red-400/60 hover:text-red-400 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
+              >
+                {deleting ? "..." : "حذف"}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -119,6 +142,7 @@ function CommentNode({
           depth={depth + 1}
           userId={userId}
           onReply={onReply}
+          onDelete={onDelete}
         />
       ))}
     </div>
@@ -249,6 +273,7 @@ export default function CommentsSection({
                 comment={c}
                 userId={userId}
                 onReply={handleReply}
+                onDelete={loadComments}
               />
             ))
           )}

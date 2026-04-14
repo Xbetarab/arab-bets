@@ -14,12 +14,23 @@ export async function createComment(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  // Check auto-approve setting for comments
+  const { data: settingsRow } = await supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "moderation")
+    .maybeSingle();
+
+  const autoApprove =
+    (settingsRow?.value as { auto_approve_comments?: boolean } | null)
+      ?.auto_approve_comments ?? true;
+
   const { error } = await supabase.from("comments").insert({
     post_id: postId,
     author_id: user.id,
     content,
     parent_id: parentId,
-    is_approved: true,
+    is_approved: autoApprove,
   });
 
   if (error) {

@@ -6,13 +6,26 @@ import type { Post } from "@/lib/supabase/types";
 import PostCard from "./post-card";
 import Link from "next/link";
 
-async function loadPosts(): Promise<Post[]> {
+async function loadPosts(userId: string | null): Promise<Post[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
+
+  // Shadow moderation: show approved posts to everyone,
+  // plus the current user's own unapproved posts (so they think it's published)
+  let query = supabase
     .from("posts")
     .select("*, profiles:author_id(*)")
     .order("created_at", { ascending: false })
     .limit(50);
+
+  if (userId) {
+    // Show: approved posts OR posts authored by this user (even if unapproved)
+    query = query.or(`is_approved.eq.true,author_id.eq.${userId}`);
+  } else {
+    // Guest: only approved posts
+    query = query.eq("is_approved", true);
+  }
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
   return data as unknown as Post[];
@@ -26,7 +39,7 @@ export default function Feed({ userId }: { userId: string | null }) {
   useEffect(() => {
     let cancelled = false;
 
-    loadPosts().then((p) => {
+    loadPosts(userId).then((p) => {
       if (!cancelled) {
         setPosts(p);
         setLoading(false);
@@ -40,7 +53,7 @@ export default function Feed({ userId }: { userId: string | null }) {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts" },
         () => {
-          loadPosts().then((p) => {
+          loadPosts(userId).then((p) => {
             if (!cancelled) setPosts(p);
           });
         }
@@ -51,7 +64,7 @@ export default function Feed({ userId }: { userId: string | null }) {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [userId]);
 
   return (
     <div className="space-y-4">

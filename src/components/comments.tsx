@@ -158,7 +158,8 @@ export default function CommentsSection({
     const supabase = createClient();
 
     // Fetch comments sorted by likes_count DESC, then created_at ASC
-    const { data } = await supabase
+    // Shadow moderation: show approved comments + current user's own unapproved comments
+    let query = supabase
       .from("comments")
       .select(
         "*, profiles:author_id(username, display_name, avatar_url)"
@@ -166,6 +167,14 @@ export default function CommentsSection({
       .eq("post_id", postId)
       .order("likes_count", { ascending: false })
       .order("created_at", { ascending: true });
+
+    if (userId) {
+      query = query.or(`is_approved.eq.true,author_id.eq.${userId}`);
+    } else {
+      query = query.eq("is_approved", true);
+    }
+
+    const { data } = await query;
 
     const rawComments = (data as unknown as Comment[]) ?? [];
 

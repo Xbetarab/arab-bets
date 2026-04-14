@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SPORTS } from "@/lib/supabase/types";
+import { createPost } from "@/app/actions/posts";
 
 export default function CreatePostForm({ userId }: { userId: string }) {
   const router = useRouter();
@@ -68,17 +69,12 @@ export default function CreatePostForm({ userId }: { userId: string }) {
         mediaUrls.push(publicUrl);
       }
 
-      // Insert post
-      const { error: insertError } = await supabase.from("posts").insert({
-        author_id: userId,
-        content: content.trim(),
-        media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-        sport: sport || null,
-      });
-
-      if (insertError) {
-        throw new Error("فشل نشر المنشور: " + insertError.message);
-      }
+      // Insert post via server action (checks auto-approve setting)
+      await createPost(
+        content.trim(),
+        sport || null,
+        mediaUrls.length > 0 ? mediaUrls : null
+      );
 
       router.push("/");
       router.refresh();

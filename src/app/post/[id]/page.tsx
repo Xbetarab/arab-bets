@@ -49,6 +49,10 @@ export default async function PostPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data: post, error } = await supabase
     .from("posts")
     .select("*, profiles:author_id(*)")
@@ -59,9 +63,10 @@ export default async function PostPage({ params }: Props) {
     notFound();
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Shadow moderation: unapproved posts only visible to author
+  if (!post.is_approved && post.author_id !== user?.id) {
+    notFound();
+  }
 
   let profile = null;
   if (user) {

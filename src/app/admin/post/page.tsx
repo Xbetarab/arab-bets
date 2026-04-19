@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { adminCreatePost } from "../actions";
 import { SPORTS } from "@/lib/supabase/types";
@@ -15,6 +15,7 @@ type ProfileOption = {
 export default function AdminPostPage() {
   const [profiles, setProfiles] = useState<ProfileOption[]>([]);
   const [selectedAuthor, setSelectedAuthor] = useState("");
+  const [profileSearch, setProfileSearch] = useState("");
   const [content, setContent] = useState("");
   const [sport, setSport] = useState("");
   const [timeOffset, setTimeOffset] = useState(0);
@@ -26,12 +27,22 @@ export default function AdminPostPage() {
     supabase
       .from("profiles")
       .select("id, username, display_name")
-      .order("created_at", { ascending: false })
-      .limit(100)
+      .order("display_name", { ascending: true })
+      .limit(2000)
       .then(({ data }) => {
         setProfiles((data as ProfileOption[]) ?? []);
       });
   }, []);
+
+  const filteredProfiles = useMemo(() => {
+    if (!profileSearch.trim()) return profiles;
+    const q = profileSearch.trim().toLowerCase();
+    return profiles.filter(
+      (p) =>
+        p.display_name.toLowerCase().includes(q) ||
+        p.username.toLowerCase().includes(q)
+    );
+  }, [profiles, profileSearch]);
 
   function handleSubmit() {
     if (!content.trim() || !selectedAuthor) return;
@@ -78,14 +89,21 @@ export default function AdminPostPage() {
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
         <div className="space-y-1.5">
-          <label className="text-xs text-zinc-500">الناشر (الحساب)</label>
+          <label className="text-xs text-zinc-500">الناشر (الحساب) — {profiles.length} حساب</label>
+          <input
+            value={profileSearch}
+            onChange={(e) => setProfileSearch(e.target.value)}
+            placeholder="ابحث عن حساب..."
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          />
           <select
             value={selectedAuthor}
             onChange={(e) => setSelectedAuthor(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer"
+            size={6}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"
           >
             <option value="">اختر حساب...</option>
-            {profiles.map((p) => (
+            {filteredProfiles.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.display_name} (@{p.username})
               </option>

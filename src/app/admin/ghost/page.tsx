@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { createGhostProfile, createGhostComment } from "../actions";
 import TimeOffsetSelect, { computeTimestamp } from "@/components/time-offset-select";
@@ -29,6 +29,7 @@ export default function GhostPage() {
   const [profiles, setProfiles] = useState<GhostProfile[]>([]);
   const [posts, setPosts] = useState<PostOption[]>([]);
   const [selectedProfile, setSelectedProfile] = useState("");
+  const [profileSearch, setProfileSearch] = useState("");
   const [isPending, startTransition] = useTransition();
 
   // New ghost form
@@ -50,8 +51,8 @@ export default function GhostPage() {
     const { data } = await supabase
       .from("profiles")
       .select("id, username, display_name, avatar_url")
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .order("display_name", { ascending: true })
+      .limit(2000);
     setProfiles((data as GhostProfile[]) ?? []);
   }
 
@@ -126,6 +127,16 @@ export default function GhostPage() {
     });
   }
 
+  const filteredProfiles = useMemo(() => {
+    if (!profileSearch.trim()) return profiles;
+    const q = profileSearch.trim().toLowerCase();
+    return profiles.filter(
+      (p) =>
+        p.display_name.toLowerCase().includes(q) ||
+        p.username.toLowerCase().includes(q)
+    );
+  }, [profiles, profileSearch]);
+
   return (
     <div className="space-y-8 max-w-2xl">
       <h1 className="text-xl font-bold text-white">التعليقات الشبحية</h1>
@@ -182,14 +193,21 @@ export default function GhostPage() {
         <h2 className="text-sm font-medium text-zinc-300">كتابة تعليق شبحي</h2>
 
         <div className="space-y-1.5">
-          <label className="text-xs text-zinc-500">اختر الحساب الشبحي</label>
+          <label className="text-xs text-zinc-500">اختر الحساب الشبحي ({profiles.length} حساب)</label>
+          <input
+            value={profileSearch}
+            onChange={(e) => setProfileSearch(e.target.value)}
+            placeholder="ابحث عن حساب..."
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 mb-1"
+          />
           <select
             value={selectedProfile}
             onChange={(e) => setSelectedProfile(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer"
+            size={6}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"
           >
             <option value="">اختر حساب...</option>
-            {profiles.map((p) => (
+            {filteredProfiles.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.display_name} (@{p.username})
               </option>

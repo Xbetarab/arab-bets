@@ -45,6 +45,12 @@ export default async function AdminLayout({
           نشر منشور
         </Link>
         <Link
+          href="/admin/import"
+          className="block px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
+        >
+          استيراد المحتوى
+        </Link>
+        <Link
           href="/admin/counters"
           className="block px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
         >
@@ -97,6 +103,12 @@ export default async function AdminLayout({
             className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
           >
             نشر
+          </Link>
+          <Link
+            href="/admin/import"
+            className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
+          >
+            استيراد
           </Link>
           <Link
             href="/admin/counters"

@@ -6,6 +6,15 @@ import { createClient } from "@/lib/supabase/client";
 import { SPORTS } from "@/lib/supabase/types";
 import { createPost } from "@/app/actions/posts";
 
+const PREDICTION_TYPES = [
+  "نتيجة المباراة",
+  "عدد الأهداف",
+  "كلا الفريقين يسجل",
+  "أول من يسجل",
+  "هاندي كاب",
+  "أخرى",
+];
+
 export default function CreatePostForm({ userId }: { userId: string }) {
   const router = useRouter();
   const [content, setContent] = useState("");
@@ -15,6 +24,17 @@ export default function CreatePostForm({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Tip mode
+  const [isTip, setIsTip] = useState(false);
+  const [matchHome, setMatchHome] = useState("");
+  const [matchAway, setMatchAway] = useState("");
+  const [league, setLeague] = useState("");
+  const [matchDate, setMatchDate] = useState("");
+  const [prediction, setPrediction] = useState("");
+  const [predictionType, setPredictionType] = useState(PREDICTION_TYPES[0]);
+  const [odds, setOdds] = useState("");
+  const [confidence, setConfidence] = useState(3);
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -40,7 +60,24 @@ export default function CreatePostForm({ userId }: { userId: string }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!content.trim() && !imageFile) return;
+
+    // Validate tip fields
+    if (isTip) {
+      if (!matchHome.trim() || !matchAway.trim()) {
+        setError("يجب إدخال اسم الفريقين");
+        return;
+      }
+      if (!prediction.trim()) {
+        setError("يجب إدخال التوقع");
+        return;
+      }
+      if (!odds || parseFloat(odds) <= 0) {
+        setError("يجب إدخال أوديز صالحة");
+        return;
+      }
+    } else if (!content.trim() && !imageFile) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -69,11 +106,25 @@ export default function CreatePostForm({ userId }: { userId: string }) {
         mediaUrls.push(publicUrl);
       }
 
+      const tipData = isTip
+        ? {
+            match_home: matchHome.trim(),
+            match_away: matchAway.trim(),
+            league: league.trim() || "غير محدد",
+            match_date: matchDate || new Date().toISOString(),
+            prediction: prediction.trim(),
+            prediction_type: predictionType,
+            odds: parseFloat(odds),
+            confidence,
+          }
+        : null;
+
       // Insert post via server action (checks auto-approve setting)
       await createPost(
         content.trim(),
         sport || null,
-        mediaUrls.length > 0 ? mediaUrls : null
+        mediaUrls.length > 0 ? mediaUrls : null,
+        tipData
       );
 
       router.push("/");
@@ -90,11 +141,135 @@ export default function CreatePostForm({ userId }: { userId: string }) {
       onSubmit={handleSubmit}
       className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4"
     >
+      {/* Post type toggle */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setIsTip(false)}
+          className={`text-sm px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+            !isTip
+              ? "bg-emerald-600 text-white"
+              : "bg-zinc-800 text-zinc-400 hover:text-white"
+          }`}
+        >
+          منشور عادي
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsTip(true)}
+          className={`text-sm px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+            isTip
+              ? "bg-emerald-600 text-white"
+              : "bg-zinc-800 text-zinc-400 hover:text-white"
+          }`}
+        >
+          ⚽ توقع رياضي
+        </button>
+      </div>
+
+      {/* Tip fields */}
+      {isTip && (
+        <div className="space-y-3 bg-zinc-800/30 rounded-lg p-3 border border-zinc-800">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">الفريق المضيف</label>
+              <input
+                value={matchHome}
+                onChange={(e) => setMatchHome(e.target.value)}
+                placeholder="مثال: ريال مدريد"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">الفريق الضيف</label>
+              <input
+                value={matchAway}
+                onChange={(e) => setMatchAway(e.target.value)}
+                placeholder="مثال: برشلونة"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">الدوري</label>
+              <input
+                value={league}
+                onChange={(e) => setLeague(e.target.value)}
+                placeholder="مثال: الدوري الإسباني"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">تاريخ المباراة</label>
+              <input
+                type="datetime-local"
+                value={matchDate}
+                onChange={(e) => setMatchDate(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">نوع التوقع</label>
+            <select
+              value={predictionType}
+              onChange={(e) => setPredictionType(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer"
+            >
+              {PREDICTION_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">التوقع</label>
+            <input
+              value={prediction}
+              onChange={(e) => setPrediction(e.target.value)}
+              placeholder="مثال: فوز ريال مدريد"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">الأوديز</label>
+              <input
+                type="number"
+                step="0.01"
+                min="1"
+                value={odds}
+                onChange={(e) => setOdds(e.target.value)}
+                placeholder="1.50"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">مستوى الثقة</label>
+              <div className="flex items-center gap-1 py-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setConfidence(star)}
+                    className={`text-xl cursor-pointer transition-colors ${
+                      star <= confidence ? "text-yellow-400" : "text-zinc-700"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="شارك رأيك أو توقعاتك..."
-        rows={5}
+        placeholder={isTip ? "أضف تحليلك (اختياري)..." : "شارك رأيك أو توقعاتك..."}
+        rows={isTip ? 3 : 5}
         maxLength={500}
         className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 resize-none focus:outline-none"
       />
@@ -172,11 +347,16 @@ export default function CreatePostForm({ userId }: { userId: string }) {
           <span className="text-xs text-zinc-600">{content.length}/500</span>
           <button
             type="submit"
-            disabled={loading || (!content.trim() && !imageFile)}
+            disabled={
+              loading ||
+              (isTip
+                ? !matchHome.trim() || !matchAway.trim() || !prediction.trim()
+                : !content.trim() && !imageFile)
+            }
             className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500
                        text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
-            {loading ? "ينشر..." : "نشر"}
+            {loading ? "ينشر..." : isTip ? "نشر التوقع" : "نشر"}
           </button>
         </div>
       </div>

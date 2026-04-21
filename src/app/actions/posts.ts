@@ -54,7 +54,17 @@ export async function deletePost(postId: string) {
 export async function createPost(
   content: string,
   sport: string | null,
-  mediaUrls: string[] | null
+  mediaUrls: string[] | null,
+  tipData?: {
+    match_home: string;
+    match_away: string;
+    league: string;
+    match_date: string;
+    prediction: string;
+    prediction_type: string;
+    odds: number;
+    confidence: number;
+  } | null
 ) {
   const supabase = await createClient();
   const {
@@ -73,15 +83,25 @@ export async function createPost(
     (settingsRow?.value as { auto_approve_posts?: boolean } | null)
       ?.auto_approve_posts ?? true;
 
+  const insertData: Record<string, unknown> = {
+    author_id: user.id,
+    content,
+    media_urls: mediaUrls,
+    sport: sport || null,
+    is_approved: autoApprove,
+  };
+
+  if (tipData) {
+    insertData.tip_data = {
+      ...tipData,
+      result: "pending",
+      settled_at: null,
+    };
+  }
+
   const { data, error } = await supabase
     .from("posts")
-    .insert({
-      author_id: user.id,
-      content,
-      media_urls: mediaUrls,
-      sport: sport || null,
-      is_approved: autoApprove,
-    })
+    .insert(insertData)
     .select("id")
     .single();
 
@@ -92,4 +112,48 @@ export async function createPost(
 
   revalidatePath("/");
   return { id: data.id, is_approved: autoApprove };
+}
+
+export async function settleTip(
+  postId: string,
+  result: "won" | "lost" | "void"
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Verify the user is the author
+  const { data: post } = await supabase
+    .from("posts")
+    .select("author_id, tip_data")
+    .eq("id", postId)
+    .single();
+
+  if (!post || post.author_id !== user.id) {
+    throw new Error("غير مصرح بتعديل هذا التوقع");
+  }
+
+  if (!post.tip_data) {
+    throw new Error("هذا المنشور ليس توقعاً");
+  }
+
+  const tipData = post.tip_data as Record<string, unknown>;
+  tipData.result = result;
+  tipData.settled_at = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("posts")
+    .update({ tip_data: tipData })
+    .eq("id", postId);
+
+  if (error) {
+    console.error("settleTip failed:", error);
+    throw new Error("فشل تحديد نتيجة التوقع: " + error.message);
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/post/${postId}`);
+  return { success: true };
 }

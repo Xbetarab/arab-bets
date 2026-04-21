@@ -38,7 +38,7 @@ export default function Navbar({
                 + نشر
               </Link>
 
-              <div className="flex items-center gap-2">
+              <Link href={`/profile/${username}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -55,7 +55,7 @@ export default function Navbar({
                   {displayName}{" "}
                   <span className="text-zinc-600">@{username}</span>
                 </span>
-              </div>
+              </Link>
 
               <form action={logout}>
                 <button
@@ -117,7 +117,7 @@ export default function Navbar({
         <div className="sm:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md px-4 py-3 space-y-3">
           {isLoggedIn ? (
             <>
-              <div className="flex items-center gap-3 pb-3 border-b border-zinc-800">
+              <Link href={`/profile/${username}`} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 pb-3 border-b border-zinc-800 hover:opacity-80 transition-opacity">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -134,7 +134,7 @@ export default function Navbar({
                   <p className="text-white text-sm font-medium">{displayName}</p>
                   <p className="text-zinc-500 text-xs">@{username}</p>
                 </div>
-              </div>
+              </Link>
               <form action={logout}>
                 <button
                   type="submit"

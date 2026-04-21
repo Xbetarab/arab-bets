@@ -216,6 +216,22 @@ export async function createGhostComment(
   return data;
 }
 
+export async function adminSetFollowersCount(
+  profileId: string,
+  followersCount: number
+) {
+  const supabase = await assertAdmin();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ followers_count: followersCount })
+    .eq("id", profileId);
+  if (error) {
+    console.error("adminSetFollowersCount failed:", error);
+    throw error;
+  }
+  revalidatePath("/");
+}
+
 export async function adminCreatePost(
   content: string,
   sport: string | null,

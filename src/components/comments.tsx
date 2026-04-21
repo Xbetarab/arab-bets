@@ -6,6 +6,7 @@ import type { Comment } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toggleCommentLike } from "@/app/actions/likes";
 import { createComment, deleteComment } from "@/app/actions/comments";
+import Link from "next/link";
 
 function buildCommentTree(comments: Comment[]): Comment[] {
   const map = new Map<string, Comment>();
@@ -57,26 +58,28 @@ function CommentNode({
   return (
     <div className={depth > 0 ? "comment-thread" : ""}>
       <div className="flex gap-3 py-3">
-        {comment.profiles?.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={comment.profiles.avatar_url}
-            alt={comment.profiles.display_name}
-            className="w-8 h-8 rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-xs shrink-0">
-            {comment.profiles?.display_name?.charAt(0) || "?"}
-          </div>
-        )}
+        <Link href={`/profile/${comment.profiles?.username}`}>
+          {comment.profiles?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={comment.profiles.avatar_url}
+              alt={comment.profiles.display_name}
+              className="w-8 h-8 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-xs shrink-0">
+              {comment.profiles?.display_name?.charAt(0) || "?"}
+            </div>
+          )}
+        </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-white font-medium">
+            <Link href={`/profile/${comment.profiles?.username}`} className="text-white font-medium hover:text-emerald-400 transition-colors">
               {comment.profiles?.display_name}
-            </span>
-            <span className="text-zinc-500">
+            </Link>
+            <Link href={`/profile/${comment.profiles?.username}`} className="text-zinc-500 hover:text-emerald-400 transition-colors">
               @{comment.profiles?.username}
-            </span>
+            </Link>
             <span className="text-zinc-600">
               &middot; {formatRelativeTime(comment.created_at)}
             </span>

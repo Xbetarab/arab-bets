@@ -1,61 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Post } from "@/lib/supabase/types";
+import { fetchFeedPage } from "@/app/actions/feed";
 import PostCard from "./post-card";
+import TipCard from "./tip-card";
 import Link from "next/link";
-
-async function loadPosts(userId: string | null): Promise<Post[]> {
-  const supabase = createClient();
-
-  // Shadow moderation: show approved posts to everyone,
-  // plus the current user's own unapproved posts (so they think it's published)
-  let query = supabase
-    .from("posts")
-    .select("*, profiles:author_id(*)")
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  if (userId) {
-    // Show: approved posts OR posts authored by this user (even if unapproved)
-    query = query.or(`is_approved.eq.true,author_id.eq.${userId}`);
-  } else {
-    // Guest: only approved posts
-    query = query.eq("is_approved", true);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data) return [];
-  return data as unknown as Post[];
-}
 
 export default function Feed({ userId }: { userId: string | null }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Initial load + real-time subscription
+  // Initial load
   useEffect(() => {
     let cancelled = false;
-
-    loadPosts(userId).then((p) => {
+    fetchFeedPage().then((result) => {
       if (!cancelled) {
-        setPosts(p);
+        setPosts(result.posts);
+        setNextCursor(result.nextCursor);
         setLoading(false);
       }
     });
 
+    // Real-time subscription for new posts at the top
     const supabase = createClient();
     const channel = supabase
       .channel("posts-feed")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "posts" },
-        () => {
-          loadPosts(userId).then((p) => {
-            if (!cancelled) setPosts(p);
-          });
+        async (payload) => {
+          if (cancelled) return;
+          const { data } = await supabase
+            .from("posts")
+            .select("*, profiles:author_id(*)")
+            .eq("id", payload.new.id)
+            .single();
+          if (data && !cancelled) {
+            const newPost = data as unknown as Post;
+            if (newPost.is_approved || newPost.author_id === userId) {
+              setPosts((prev) => {
+                if (prev.some((p) => p.id === newPost.id)) return prev;
+                return [newPost, ...prev];
+              });
+            }
+          }
         }
       )
       .subscribe();
@@ -65,6 +58,38 @@ export default function Feed({ userId }: { userId: string | null }) {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  // Load more posts
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    const result = await fetchFeedPage(nextCursor);
+    setPosts((prev) => {
+      const existingIds = new Set(prev.map((p) => p.id));
+      const newPosts = result.posts.filter((p) => !existingIds.has(p.id));
+      return [...prev, ...newPosts];
+    });
+    setNextCursor(result.nextCursor);
+    setLoadingMore(false);
+  }, [nextCursor, loadingMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   return (
     <div className="space-y-4">
@@ -98,9 +123,30 @@ export default function Feed({ userId }: { userId: string | null }) {
           لا توجد منشورات حتى الآن. كن أول من ينشر!
         </div>
       ) : (
-        posts.map((post) => (
-          <PostCard key={post.id} post={post} userId={userId} />
-        ))
+        <>
+          {posts.map((post) =>
+            post.tip_data ? (
+              <TipCard key={post.id} post={post} userId={userId} />
+            ) : (
+              <PostCard key={post.id} post={post} userId={userId} />
+            )
+          )}
+
+          {/* Sentinel for infinite scroll */}
+          <div ref={sentinelRef} className="h-1" />
+
+          {loadingMore && (
+            <div className="flex justify-center py-6">
+              <span className="block h-6 w-6 rounded-full border-2 border-zinc-600 border-t-emerald-400 animate-spin" />
+            </div>
+          )}
+
+          {!nextCursor && !loadingMore && (
+            <p dir="rtl" className="text-center text-zinc-600 text-xs py-6">
+              لا يوجد المزيد من المنشورات
+            </p>
+          )}
+        </>
       )}
     </div>
   );

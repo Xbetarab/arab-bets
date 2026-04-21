@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { adminSetPostCounts, adminSetCommentLikes } from "../actions";
+import { adminSetPostCounts, adminSetCommentLikes, adminSetFollowersCount } from "../actions";
 
 type PostPreview = {
   id: string;
@@ -18,18 +18,29 @@ type CommentPreview = {
   post_id: string;
 };
 
+type ProfilePreview = {
+  id: string;
+  username: string;
+  display_name: string;
+  followers_count: number;
+};
+
 export default function CountersPage() {
   const [posts, setPosts] = useState<PostPreview[]>([]);
   const [comments, setComments] = useState<CommentPreview[]>([]);
+  const [profiles, setProfiles] = useState<ProfilePreview[]>([]);
   const [selectedPost, setSelectedPost] = useState<PostPreview | null>(null);
   const [selectedComment, setSelectedComment] = useState<CommentPreview | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<ProfilePreview | null>(null);
   const [postLikes, setPostLikes] = useState(0);
   const [postComments, setPostComments] = useState(0);
   const [commentLikes, setCommentLikes] = useState(0);
+  const [profileFollowers, setProfileFollowers] = useState(0);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
 
   async function loadPosts() {
     setLoadingPosts(true);
@@ -244,6 +255,89 @@ export default function CountersPage() {
             className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white text-sm px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px] w-full"
           >
             {isPending ? "جاري الحفظ..." : "حفظ إعجابات التعليق"}
+          </button>
+        </div>
+      )}
+      {/* Followers counter section */}
+      <hr className="border-zinc-800" />
+      <h2 className="text-lg font-bold text-white">التحكم بعدد المتابعين</h2>
+
+      <div className="space-y-3">
+        <button
+          onClick={async () => {
+            setLoadingProfiles(true);
+            const supabase = createClient();
+            const { data } = await supabase
+              .from("profiles")
+              .select("id, username, display_name, followers_count")
+              .order("created_at", { ascending: false })
+              .limit(50);
+            setProfiles((data as ProfilePreview[]) ?? []);
+            setLoadingProfiles(false);
+          }}
+          disabled={loadingProfiles}
+          className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white text-sm px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+        >
+          {loadingProfiles ? "جاري التحميل..." : "تحميل الحسابات"}
+        </button>
+
+        {profiles.length > 0 && (
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {profiles.map((profile) => (
+              <button
+                key={profile.id}
+                onClick={() => {
+                  setSelectedProfile(profile);
+                  setProfileFollowers(profile.followers_count);
+                }}
+                className={`w-full text-right p-3 rounded-lg text-sm transition-colors cursor-pointer ${
+                  selectedProfile?.id === profile.id
+                    ? "bg-emerald-600/20 border border-emerald-600/30"
+                    : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700"
+                }`}
+              >
+                <p className="text-zinc-200">{profile.display_name} (@{profile.username})</p>
+                <p className="text-zinc-500 text-xs mt-1">👥 {profile.followers_count} متابع</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {selectedProfile && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+          <h2 className="text-sm font-medium text-zinc-300">تعديل عدد متابعين {selectedProfile.display_name}</h2>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">عدد المتابعين</label>
+            <input
+              type="number"
+              min={0}
+              value={profileFollowers}
+              onChange={(e) => setProfileFollowers(Number(e.target.value))}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+          </div>
+          <button
+            onClick={() => {
+              startTransition(async () => {
+                try {
+                  await adminSetFollowersCount(selectedProfile.id, profileFollowers);
+                  setMessage({ type: "success", text: "تم تحديث عدد المتابعين" });
+                  setSelectedProfile({ ...selectedProfile, followers_count: profileFollowers });
+                  setProfiles((prev) =>
+                    prev.map((p) =>
+                      p.id === selectedProfile.id ? { ...p, followers_count: profileFollowers } : p
+                    )
+                  );
+                } catch {
+                  setMessage({ type: "error", text: "فشل تحديث عدد المتابعين" });
+                }
+              });
+            }}
+            disabled={isPending}
+            className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white text-sm px-4 py-2 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px] w-full"
+          >
+            {isPending ? "جاري الحفظ..." : "حفظ عدد المتابعين"}
           </button>
         </div>
       )}

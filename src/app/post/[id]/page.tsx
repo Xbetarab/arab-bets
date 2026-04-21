@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import type { Post } from "@/lib/supabase/types";
 import Navbar from "@/components/navbar";
 import PostCard from "@/components/post-card";
+import TipCard from "@/components/tip-card";
 import Link from "next/link";
 
 type Props = {
@@ -96,11 +97,18 @@ export default async function PostPage({ params }: Props) {
             → العودة للرئيسية
           </Link>
         </div>
-        <PostCard
-          post={post as unknown as Post}
-          userId={user?.id ?? null}
-          permalink
-        />
+        {(post as unknown as Post).tip_data ? (
+          <TipCard
+            post={post as unknown as Post}
+            userId={user?.id ?? null}
+          />
+        ) : (
+          <PostCard
+            post={post as unknown as Post}
+            userId={user?.id ?? null}
+            permalink
+          />
+        )}
       </main>
     </div>
   );

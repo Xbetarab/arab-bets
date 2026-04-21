@@ -92,24 +92,26 @@ export default function PostCard({
     >
       {/* Header */}
       <div className="flex items-center gap-3">
-        {profile?.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={profile.avatar_url}
-            alt={profile.display_name}
-            className="w-10 h-10 rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-sm shrink-0">
-            {profile?.display_name?.charAt(0) || "?"}
-          </div>
-        )}
+        <Link href={`/profile/${profile?.username}`}>
+          {profile?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.avatar_url}
+              alt={profile.display_name}
+              className="w-10 h-10 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-sm shrink-0">
+              {profile?.display_name?.charAt(0) || "?"}
+            </div>
+          )}
+        </Link>
         <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-medium truncate">
+          <Link href={`/profile/${profile?.username}`} className="text-white text-sm font-medium truncate block hover:text-emerald-400 transition-colors">
             {profile?.display_name || "مجهول"}
-          </p>
+          </Link>
           <p className="text-zinc-500 text-xs">
-            @{profile?.username || "unknown"} &middot;{" "}
+            <Link href={`/profile/${profile?.username}`} className="hover:text-emerald-400 transition-colors">@{profile?.username || "unknown"}</Link> &middot;{" "}
             {permalink ? (
               <span>{formatRelativeTime(post.created_at)}</span>
             ) : (

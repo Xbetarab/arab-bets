@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import {
   importPostsWithComments,
   importCommentsOnly,
+  uploadGhostIdentities,
+  getGhostPoolStats,
+  clearGhostPool,
   type ImportResult,
+  type GhostPoolStats,
+  type GhostUploadResult,
 } from "./actions";
 
 function ResultCard({ result }: { result: ImportResult }) {
@@ -60,6 +65,14 @@ function ResultCard({ result }: { result: ImportResult }) {
 export default function ImportPage() {
   const [isPending, startTransition] = useTransition();
 
+  // Ghost pool
+  const [ghostFile, setGhostFile] = useState<File | null>(null);
+  const [ghostPreview, setGhostPreview] = useState<{ count: number; sample: string[] } | null>(null);
+  const [ghostResult, setGhostResult] = useState<GhostUploadResult | null>(null);
+  const [poolStats, setPoolStats] = useState<GhostPoolStats | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const ghostInputRef = useRef<HTMLInputElement>(null);
+
   // Posts import
   const [postsFile, setPostsFile] = useState<File | null>(null);
   const [postsPreview, setPostsPreview] = useState<{
@@ -84,6 +97,67 @@ export default function ImportPage() {
 
   // Progress
   const [progress, setProgress] = useState("");
+
+  // Load pool stats on mount
+  useEffect(() => {
+    getGhostPoolStats().then(setPoolStats).catch(() => {});
+  }, []);
+
+  // Ghost file handler
+  async function handleGhostFileChange(file: File | null) {
+    setGhostFile(file);
+    setGhostPreview(null);
+    setGhostResult(null);
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.ghost_users || !Array.isArray(data.ghost_users)) {
+        setGhostPreview(null);
+        return;
+      }
+      setGhostPreview({
+        count: data.ghost_users.length,
+        sample: data.ghost_users.slice(0, 5).map((u: { display_name: string; username: string }) => `${u.display_name} (@${u.username})`),
+      });
+    } catch {
+      setGhostPreview(null);
+    }
+  }
+
+  function handleGhostUpload() {
+    if (!ghostFile) return;
+    setGhostResult(null);
+    setProgress("\u062c\u0627\u0631\u064a \u0631\u0641\u0639 \u0627\u0644\u062d\u0633\u0627\u0628\u0627\u062a \u0627\u0644\u0634\u0628\u062d\u064a\u0629...");
+    startTransition(async () => {
+      try {
+        const text = await ghostFile.text();
+        const result = await uploadGhostIdentities(text);
+        setGhostResult(result);
+        setProgress("");
+        // Refresh stats
+        const stats = await getGhostPoolStats();
+        setPoolStats(stats);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setGhostResult({ success: false, added: 0, skippedDuplicates: 0, errors: [msg] });
+        setProgress("");
+      }
+    });
+  }
+
+  function handleClearPool() {
+    setShowClearConfirm(false);
+    startTransition(async () => {
+      try {
+        await clearGhostPool();
+        const stats = await getGhostPoolStats();
+        setPoolStats(stats);
+      } catch {
+        // ignore
+      }
+    });
+  }
 
   // ── Posts file handler ────────────────────────────────────────────
   async function handlePostsFileChange(file: File | null) {
@@ -246,6 +320,179 @@ export default function ImportPage() {
           {progress}
         </div>
       )}
+
+      {/* Section 0: Ghost Identity Pool */}
+      <div className="bg-zinc-900 border border-emerald-600/30 rounded-xl p-4 space-y-4">
+        <div>
+          <h2 className="text-sm font-medium text-emerald-400">
+            مخزون الحسابات الشبحية
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">
+            ارفع ملفات JSON تحتوي على أسماء وأسماء مستخدمين للحسابات الشبحية. يتم
+            استخدام هذا المخزون حصرياً عند استيراد المنشورات والتعليقات.
+          </p>
+        </div>
+
+        {/* Pool stats */}
+        {poolStats && (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-white">{poolStats.total}</div>
+              <div className="text-xs text-zinc-500">إجمالي</div>
+            </div>
+            <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-emerald-400">{poolStats.available}</div>
+              <div className="text-xs text-zinc-500">متاح</div>
+            </div>
+            <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-zinc-400">{poolStats.used}</div>
+              <div className="text-xs text-zinc-500">مُستخدم</div>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <input
+            ref={ghostInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={(e) => handleGhostFileChange(e.target.files?.[0] ?? null)}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => ghostInputRef.current?.click()}
+            className="w-full border-2 border-dashed border-emerald-700/50 hover:border-emerald-500/50 rounded-lg px-4 py-6 text-center transition-colors cursor-pointer min-h-[44px]"
+          >
+            {ghostFile ? (
+              <div className="space-y-1">
+                <div className="text-sm text-emerald-400">{ghostFile.name}</div>
+                <div className="text-xs text-zinc-500">
+                  {(ghostFile.size / 1024).toFixed(1)} KB — اضغط لتغيير الملف
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-sm text-zinc-400">اضغط لاختيار ملف حسابات شبحية JSON</div>
+                <div className="text-xs text-zinc-600">
+                  صيغة: {"{"}&quot;ghost_users&quot;: [...]&#125;
+                </div>
+              </div>
+            )}
+          </button>
+
+          {/* Preview */}
+          {ghostPreview && (
+            <div className="bg-zinc-800/50 rounded-lg p-3 space-y-1">
+              <div className="text-xs font-medium text-zinc-400">
+                معاينة الملف:
+              </div>
+              <div className="text-xs text-zinc-300">
+                👤 {ghostPreview.count} حساب شبحي
+              </div>
+              {ghostPreview.sample.length > 0 && (
+                <div className="text-xs text-zinc-500 mt-1">
+                  أمثلة: {ghostPreview.sample.join("، ")}
+                  {ghostPreview.count > 5 && "..."}
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleGhostUpload}
+            disabled={isPending || !ghostFile}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {isPending ? "جاري الرفع..." : "إضافة إلى المخزون"}
+          </button>
+
+          {/* Ghost upload result */}
+          {ghostResult && (
+            <div className={`text-sm px-4 py-3 rounded-lg border ${
+              ghostResult.errors.length === 0
+                ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20"
+                : "bg-red-600/10 text-red-400 border-red-600/20"
+            }`}>
+              <div className="space-y-1 text-xs">
+                {ghostResult.added > 0 && (
+                  <div>تمت إضافة: <span className="font-bold">{ghostResult.added}</span> حساب</div>
+                )}
+                {ghostResult.skippedDuplicates > 0 && (
+                  <div>تم تخطي (مكرر): <span className="font-bold">{ghostResult.skippedDuplicates}</span></div>
+                )}
+              </div>
+              {ghostResult.errors.length > 0 && (
+                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                  {ghostResult.errors.map((err, i) => (
+                    <div key={i} className="text-xs text-red-300/80">• {err}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Clear pool button */}
+          {poolStats && poolStats.total > 0 && (
+            <div className="pt-2 border-t border-zinc-800">
+              {!showClearConfirm ? (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="text-xs text-red-400/60 hover:text-red-400 transition-colors min-h-[44px]"
+                >
+                  مسح المخزون بالكامل
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-400">هل أنت متأكد؟</span>
+                  <button
+                    onClick={handleClearPool}
+                    disabled={isPending}
+                    className="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg min-h-[44px]"
+                  >
+                    نعم، امسح الكل
+                  </button>
+                  <button
+                    onClick={() => setShowClearConfirm(false)}
+                    className="text-xs text-zinc-400 hover:text-zinc-300 px-3 py-1.5 min-h-[44px]"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* JSON spec for ghost file */}
+        <div className="border-t border-zinc-800 pt-3">
+          <div className="text-xs text-zinc-400 font-medium mb-2">
+            صيغة ملف الحسابات الشبحية:
+          </div>
+          <pre
+            dir="ltr"
+            className="bg-zinc-800 rounded-lg p-3 text-xs text-zinc-300 overflow-x-auto"
+          >
+            {`{
+  "ghost_users": [
+    {
+      "display_name": "Ali Hassan",
+      "username": "ali_hassan"
+    },
+    {
+      "display_name": "\u0633\u062c\u0627\u062f \u0643\u0631\u064a\u0645",
+      "username": "sajad_iraq"
+    }
+  ]
+}`}
+          </pre>
+          <div className="text-xs text-zinc-500 mt-2 space-y-1">
+            <div>• كل ملف جديد يُضاف إلى المخزون الحالي (لا يستبدله)</div>
+            <div>• أسماء المستخدمين المكررة يتم تخطيها تلقائياً</div>
+            <div>• يدعم الأسماء بالعربية والإنجليزية</div>
+          </div>
+        </div>
+      </div>
 
       {/* Section 1: Import Posts + Comments */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
@@ -466,7 +713,7 @@ export default function ImportPage() {
         <div className="text-xs text-zinc-500 space-y-1">
           <div>
             • <code className="text-zinc-400">author_username</code>: يجب أن
-            يطابق حساب شبحي موجود، وإلا سيتم إنشاء حساب جديد تلقائياً
+            يطابق حساب موجود أو حساب في مخزون الحسابات الشبحية. إذا لم يتطابق، سيتم اختيار هوية عشوائية من المخزون
           </div>
           <div>
             • <code className="text-zinc-400">sport</code>: اختياري — كرة قدم،

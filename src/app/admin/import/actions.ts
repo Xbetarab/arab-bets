@@ -89,7 +89,216 @@ const SPORT_MAP: Record<string, string> = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Helper: resolve username → profile id (auto-create if missing)     */
+/*  Ghost Identity Pool types & actions                                */
+/* ------------------------------------------------------------------ */
+
+type GhostIdentity = {
+  display_name: string;
+  username: string;
+};
+
+type GhostIdentityFile = {
+  ghost_users: GhostIdentity[];
+};
+
+export type GhostPoolStats = {
+  total: number;
+  used: number;
+  available: number;
+};
+
+export type GhostUploadResult = {
+  success: boolean;
+  added: number;
+  skippedDuplicates: number;
+  errors: string[];
+};
+
+/** Upload ghost identities JSON — merges into existing pool */
+export async function uploadGhostIdentities(
+  jsonString: string
+): Promise<GhostUploadResult> {
+  const supabase = await assertAdmin();
+  const errors: string[] = [];
+  let added = 0;
+  let skippedDuplicates = 0;
+
+  // Parse JSON
+  let data: GhostIdentityFile;
+  try {
+    data = JSON.parse(jsonString);
+  } catch {
+    return { success: false, added: 0, skippedDuplicates: 0, errors: ["ملف JSON غير صالح. تأكد من صحة التنسيق."] };
+  }
+
+  if (!data.ghost_users || !Array.isArray(data.ghost_users)) {
+    return { success: false, added: 0, skippedDuplicates: 0, errors: ['الملف يجب أن يحتوي على مفتاح "ghost_users" يكون مصفوفة.'] };
+  }
+
+  if (data.ghost_users.length === 0) {
+    return { success: false, added: 0, skippedDuplicates: 0, errors: ["الملف لا يحتوي على أي حسابات شبحية."] };
+  }
+
+  // Validate each entry
+  for (let i = 0; i < data.ghost_users.length; i++) {
+    const user = data.ghost_users[i];
+    if (!user.display_name || typeof user.display_name !== "string") {
+      errors.push(`حساب ${i + 1}: حقل display_name مطلوب ويجب أن يكون نصاً`);
+    }
+    if (!user.username || typeof user.username !== "string") {
+      errors.push(`حساب ${i + 1}: حقل username مطلوب ويجب أن يكون نصاً`);
+    }
+  }
+
+  if (errors.length > 0) {
+    return { success: false, added: 0, skippedDuplicates: 0, errors };
+  }
+
+  // Load existing usernames from pool to check duplicates
+  const { data: existing } = await supabase
+    .from("ghost_identities")
+    .select("username")
+    .limit(10000);
+  const existingUsernames = new Set((existing ?? []).map((e: { username: string }) => e.username.toLowerCase()));
+
+  // Also check for duplicates within the file itself
+  const fileUsernames = new Set<string>();
+
+  for (let i = 0; i < data.ghost_users.length; i++) {
+    const user = data.ghost_users[i];
+    const lowerUsername = user.username.toLowerCase();
+
+    if (existingUsernames.has(lowerUsername)) {
+      skippedDuplicates++;
+      continue;
+    }
+
+    if (fileUsernames.has(lowerUsername)) {
+      skippedDuplicates++;
+      continue;
+    }
+
+    fileUsernames.add(lowerUsername);
+
+    const { error } = await supabase
+      .from("ghost_identities")
+      .insert({
+        display_name: user.display_name.trim(),
+        username: user.username.trim(),
+      });
+
+    if (error) {
+      if (error.code === "23505") {
+        skippedDuplicates++;
+      } else {
+        errors.push(`حساب "${user.username}": ${error.message}`);
+      }
+    } else {
+      added++;
+    }
+  }
+
+  return {
+    success: errors.length === 0,
+    added,
+    skippedDuplicates,
+    errors,
+  };
+}
+
+/** Get ghost pool statistics */
+export async function getGhostPoolStats(): Promise<GhostPoolStats> {
+  const supabase = await assertAdmin();
+
+  const { count: total } = await supabase
+    .from("ghost_identities")
+    .select("*", { count: "exact", head: true });
+
+  const { count: used } = await supabase
+    .from("ghost_identities")
+    .select("*", { count: "exact", head: true })
+    .eq("is_used", true);
+
+  return {
+    total: total ?? 0,
+    used: used ?? 0,
+    available: (total ?? 0) - (used ?? 0),
+  };
+}
+
+/** Clear entire ghost pool */
+export async function clearGhostPool(): Promise<{ success: boolean; deleted: number }> {
+  const supabase = await assertAdmin();
+
+  const { count } = await supabase
+    .from("ghost_identities")
+    .select("*", { count: "exact", head: true });
+
+  const { error } = await supabase
+    .from("ghost_identities")
+    .delete()
+    .gte("id", "00000000-0000-0000-0000-000000000000");
+
+  if (error) {
+    throw new Error("فشل مسح مخزون الحسابات: " + error.message);
+  }
+
+  return { success: true, deleted: count ?? 0 };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helper: pick random ghost identity from pool & create profile      */
+/* ------------------------------------------------------------------ */
+
+async function pickRandomGhostAndCreateProfile(
+  supabase: ReturnType<typeof createAdminClient>
+): Promise<{ id: string; username: string }> {
+  // Pick a random unused ghost identity
+  const { data: available, error: fetchError } = await supabase
+    .from("ghost_identities")
+    .select("id, display_name, username")
+    .eq("is_used", false)
+    .limit(100);
+
+  if (fetchError) {
+    throw new Error("فشل جلب الحسابات الشبحية: " + fetchError.message);
+  }
+
+  if (!available || available.length === 0) {
+    throw new Error(
+      "لا توجد حسابات شبحية متاحة في المخزون. يرجى رفع ملف حسابات شبحية أولاً من قسم \"مخزون الحسابات الشبحية\"."
+    );
+  }
+
+  // Pick random one
+  const picked = available[Math.floor(Math.random() * available.length)];
+
+  // Mark as used
+  await supabase
+    .from("ghost_identities")
+    .update({ is_used: true })
+    .eq("id", picked.id);
+
+  // Create the actual ghost profile
+  const { data: newId, error: createError } = await supabase.rpc(
+    "admin_create_ghost_profile",
+    {
+      p_username: picked.username,
+      p_display_name: picked.display_name,
+      p_avatar_url: null,
+    }
+  );
+
+  if (createError) {
+    throw new Error(`فشل إنشاء الحساب الشبحي "${picked.username}": ${createError.message}`);
+  }
+
+  const profileId = typeof newId === "string" ? newId : String(newId);
+  return { id: profileId, username: picked.username };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helper: resolve username → profile id (pool-only, no auto-gen)     */
 /* ------------------------------------------------------------------ */
 
 async function resolveProfileId(
@@ -114,25 +323,46 @@ async function resolveProfileId(
     return existing.id;
   }
 
-  // Auto-create ghost profile
-  const displayName = username.replace(/_/g, " ");
-  const { data: newId, error } = await supabase.rpc(
-    "admin_create_ghost_profile",
-    {
-      p_username: username,
-      p_display_name: displayName,
-      p_avatar_url: null,
-    }
-  );
+  // Username not found — check if it exists in the ghost pool
+  const { data: poolEntry } = await supabase
+    .from("ghost_identities")
+    .select("id, display_name, username")
+    .eq("username", username)
+    .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to create ghost profile "${username}": ${error.message}`);
+  if (poolEntry) {
+    // Create ghost profile from pool entry
+    await supabase
+      .from("ghost_identities")
+      .update({ is_used: true })
+      .eq("id", poolEntry.id);
+
+    const { data: newId, error } = await supabase.rpc(
+      "admin_create_ghost_profile",
+      {
+        p_username: poolEntry.username,
+        p_display_name: poolEntry.display_name,
+        p_avatar_url: null,
+      }
+    );
+
+    if (error) {
+      throw new Error(`فشل إنشاء الحساب الشبحي "${username}": ${error.message}`);
+    }
+
+    const id = typeof newId === "string" ? newId : String(newId);
+    profileCache.set(username, id);
+    newProfileCount.count++;
+    return id;
   }
 
-  const id = typeof newId === "string" ? newId : String(newId);
-  profileCache.set(username, id);
+  // Not in profiles and not in pool — pick a random identity from pool
+  const result = await pickRandomGhostAndCreateProfile(supabase);
+  profileCache.set(result.username, result.id);
+  // Also cache the original username pointing to the same profile
+  profileCache.set(username, result.id);
   newProfileCount.count++;
-  return id;
+  return result.id;
 }
 
 /* ------------------------------------------------------------------ */

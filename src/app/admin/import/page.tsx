@@ -334,20 +334,59 @@ export default function ImportPage() {
         </div>
 
         {/* Pool stats */}
-        {poolStats && (
-          <div className="grid grid-cols-3 gap-2">
+        {poolStats && poolStats.total > 0 && (
+          <div className="space-y-3">
+            {/* Main count */}
             <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-white">{poolStats.total}</div>
-              <div className="text-xs text-zinc-500">إجمالي</div>
+              <div className="text-2xl font-bold text-emerald-400">{poolStats.total}</div>
+              <div className="text-xs text-zinc-500">إجمالي الحسابات الشبحية (قابلة للإعادة)</div>
             </div>
-            <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-emerald-400">{poolStats.available}</div>
-              <div className="text-xs text-zinc-500">متاح</div>
+
+            {/* Role breakdown */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
+                <div className="text-sm font-bold text-blue-400">{poolStats.posters}</div>
+                <div className="text-[10px] text-zinc-500">ناشرون</div>
+              </div>
+              <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
+                <div className="text-sm font-bold text-amber-400">{poolStats.commenters}</div>
+                <div className="text-[10px] text-zinc-500">معلقون</div>
+              </div>
+              <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
+                <div className="text-sm font-bold text-zinc-300">{poolStats.balanced}</div>
+                <div className="text-[10px] text-zinc-500">متوازن</div>
+              </div>
             </div>
-            <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-zinc-400">{poolStats.used}</div>
-              <div className="text-xs text-zinc-500">مُستخدم</div>
+
+            {/* Activity tiers */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
+                <div className="text-sm font-bold text-emerald-400">{poolStats.highActivity}</div>
+                <div className="text-[10px] text-zinc-500">نشاط عالي</div>
+              </div>
+              <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
+                <div className="text-sm font-bold text-zinc-300">{poolStats.mediumActivity}</div>
+                <div className="text-[10px] text-zinc-500">نشاط متوسط</div>
+              </div>
+              <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
+                <div className="text-sm font-bold text-zinc-500">{poolStats.lowActivity}</div>
+                <div className="text-[10px] text-zinc-500">نشاط منخفض</div>
+              </div>
             </div>
+
+            {/* Top identities preview */}
+            {poolStats.topIdentities.length > 0 && (
+              <div className="border-t border-zinc-800 pt-2">
+                <div className="text-[10px] text-zinc-500 mb-1">أكثر الحسابات نشاطاً:</div>
+                <div className="flex flex-wrap gap-1">
+                  {poolStats.topIdentities.slice(0, 6).map((g, i) => (
+                    <span key={i} className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
+                      {g.display_name} <span className="text-zinc-600">({(g.activity_weight * 100).toFixed(0)}%)</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -476,18 +515,25 @@ export default function ImportPage() {
             {`{
   "ghost_users": [
     {
-      "display_name": "Ali Hassan",
-      "username": "ali_hassan"
+      "display_name": "\u0645\u062d\u0645\u062f \u062c\u0628\u0627\u0631",
+      "username": "moh_jabar",
+      "activity_weight": 0.9,
+      "role_preference": "commenter"
     },
     {
-      "display_name": "\u0633\u062c\u0627\u062f \u0643\u0631\u064a\u0645",
-      "username": "sajad_iraq"
+      "display_name": "Hassan Ali",
+      "username": "hassan_ali",
+      "activity_weight": 0.4,
+      "role_preference": "balanced"
     }
   ]
 }`}
           </pre>
           <div className="text-xs text-zinc-500 mt-2 space-y-1">
             <div>• كل ملف جديد يُضاف إلى المخزون الحالي (لا يستبدله)</div>
+            <div>• الحسابات قابلة لإعادة الاستخدام عبر عمليات استيراد متعددة — لا يتم استنفادها</div>
+            <div>• <code className="text-zinc-400">activity_weight</code>: اختياري (0-1، افتراضي 0.5) — أعلى = يظهر أكثر</div>
+            <div>• <code className="text-zinc-400">role_preference</code>: اختياري (“poster”, “commenter”, “balanced”) — يؤثر على اختيار الحساب للمنشورات أو التعليقات</div>
             <div>• أسماء المستخدمين المكررة يتم تخطيها تلقائياً</div>
             <div>• يدعم الأسماء بالعربية والإنجليزية</div>
           </div>

@@ -63,10 +63,12 @@ export default function TipCard({
   post,
   userId,
   canSettle = false,
+  isAdmin = false,
 }: {
   post: Post;
   userId: string | null;
   canSettle?: boolean;
+  isAdmin?: boolean;
 }) {
   const tip = post.tip_data!;
   const profile = post.profiles;
@@ -345,6 +347,7 @@ export default function TipCard({
           userId={userId}
           forceOpen={showComments}
           onCommentsCountChange={(count) => setCommentsCount(count)}
+          isAdmin={isAdmin}
         />
       </div>
     </article>

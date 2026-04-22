@@ -8,5 +8,7 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return <Feed userId={user?.id ?? null} />;
+  const isAdmin = user?.email === "uomankotd@gmail.com";
+
+  return <Feed userId={user?.id ?? null} isAdmin={isAdmin} />;
 }

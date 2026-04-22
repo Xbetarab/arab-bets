@@ -6,6 +6,7 @@ import type { Comment } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toggleCommentLike } from "@/app/actions/likes";
 import { createComment, deleteComment } from "@/app/actions/comments";
+import { adminEditComment, adminDeleteComment } from "@/app/admin/actions";
 import Link from "next/link";
 
 function buildCommentTree(comments: Comment[]): Comment[] {
@@ -31,18 +32,26 @@ function CommentNode({
   userId,
   onReply,
   onDelete,
+  isAdmin = false,
 }: {
   comment: Comment;
   depth?: number;
   userId: string | null;
   onReply: (parentId: string) => void;
   onDelete: () => void;
+  isAdmin?: boolean;
 }) {
   const [liked, setLiked] = useState(comment.user_has_liked ?? false);
   const [likesCount, setLikesCount] = useState(comment.likes_count);
   const [isPending, startTransition] = useTransition();
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [displayContent, setDisplayContent] = useState(comment.content);
+  const [saving, setSaving] = useState(false);
   const isAuthor = userId === comment.author_id;
+  const canDelete = isAuthor || isAdmin;
+  const canEdit = isAdmin;
 
   function handleLike() {
     if (!userId) return;
@@ -84,7 +93,44 @@ function CommentNode({
               &middot; {formatRelativeTime(comment.created_at)}
             </span>
           </div>
-          <p className="text-zinc-300 text-sm mt-1">{comment.content}</p>
+          {editing ? (
+            <div className="mt-1 space-y-2">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[60px] resize-y"
+                dir="rtl"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setEditing(false)}
+                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!editContent.trim()) return;
+                    setSaving(true);
+                    try {
+                      await adminEditComment(comment.id, editContent.trim());
+                      setDisplayContent(editContent.trim());
+                      setEditing(false);
+                    } catch (err) {
+                      console.error(err);
+                    }
+                    setSaving(false);
+                  }}
+                  disabled={saving || !editContent.trim()}
+                  className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? "..." : "حفظ"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-zinc-300 text-sm mt-1">{displayContent}</p>
+          )}
           <div className="flex gap-4 mt-2 text-zinc-500 text-xs">
             <button
               onClick={handleLike}
@@ -116,13 +162,28 @@ function CommentNode({
                 رد
               </button>
             )}
-            {isAuthor && (
+            {canEdit && (
+              <button
+                onClick={() => {
+                  setEditContent(displayContent);
+                  setEditing(true);
+                }}
+                className="text-emerald-400/60 hover:text-emerald-400 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                تعديل
+              </button>
+            )}
+            {canDelete && (
               <button
                 onClick={async () => {
                   if (!confirm("هل أنت متأكد من حذف هذا التعليق؟")) return;
                   setDeleting(true);
                   try {
-                    await deleteComment(comment.id);
+                    if (isAdmin) {
+                      await adminDeleteComment(comment.id);
+                    } else {
+                      await deleteComment(comment.id);
+                    }
                     onDelete();
                   } catch (err) {
                     console.error(err);
@@ -146,6 +207,7 @@ function CommentNode({
           userId={userId}
           onReply={onReply}
           onDelete={onDelete}
+          isAdmin={isAdmin}
         />
       ))}
     </div>
@@ -157,11 +219,13 @@ export default function CommentsSection({
   userId,
   forceOpen,
   onCommentsCountChange,
+  isAdmin = false,
 }: {
   postId: string;
   userId: string | null;
   forceOpen?: boolean;
   onCommentsCountChange?: (count: number) => void;
+  isAdmin?: boolean;
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -277,6 +341,7 @@ export default function CommentsSection({
                 userId={userId}
                 onReply={handleReply}
                 onDelete={loadComments}
+                isAdmin={isAdmin}
               />
             ))
           )}

@@ -7,6 +7,7 @@ import { formatRelativeTime } from "@/lib/format-time";
 import { Linkify } from "@/lib/linkify";
 import { togglePostLike } from "@/app/actions/likes";
 import { deletePost } from "@/app/actions/posts";
+import { adminEditPost, adminDeletePost } from "@/app/admin/actions";
 import { createClient } from "@/lib/supabase/client";
 import CommentsSection from "./comments";
 import Link from "next/link";
@@ -21,10 +22,12 @@ export default function PostCard({
   post,
   userId,
   permalink = false,
+  isAdmin = false,
 }: {
   post: Post;
   userId: string | null;
   permalink?: boolean;
+  isAdmin?: boolean;
 }) {
   const profile = post.profiles;
   const images = post.media_urls ?? [];
@@ -36,8 +39,14 @@ export default function PostCard({
   const [shareToast, setShareToast] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content ?? "");
+  const [displayContent, setDisplayContent] = useState(post.content ?? "");
+  const [saving, setSaving] = useState(false);
+  const [copyIdToast, setCopyIdToast] = useState(false);
   const router = useRouter();
   const isAuthor = userId === post.author_id;
+  const showOptionsMenu = isAuthor || isAdmin;
 
   // Check if user already liked this post on mount
   useEffect(() => {
@@ -85,6 +94,44 @@ export default function PostCard({
     }
   }
 
+  async function handleCopyPostId() {
+    await navigator.clipboard.writeText(post.id);
+    setCopyIdToast(true);
+    setShowMenu(false);
+    setTimeout(() => setCopyIdToast(false), 2000);
+  }
+
+  async function handleAdminEdit() {
+    if (!editContent.trim()) return;
+    setSaving(true);
+    try {
+      await adminEditPost(post.id, editContent.trim());
+      setDisplayContent(editContent.trim());
+      setEditing(false);
+    } catch (err) {
+      console.error(err);
+    }
+    setSaving(false);
+  }
+
+  async function handleDelete() {
+    setShowMenu(false);
+    if (!confirm("هل أنت متأكد من حذف هذا المنشور؟")) return;
+    setDeleting(true);
+    try {
+      if (isAdmin) {
+        await adminDeletePost(post.id);
+      } else {
+        await deletePost(post.id);
+      }
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setDeleting(false);
+    }
+  }
+
   return (
     <article
       dir="rtl"
@@ -124,8 +171,8 @@ export default function PostCard({
             )}
           </p>
         </div>
-        {/* Options menu for author */}
-        {isAuthor && (
+        {/* Options menu for author or admin */}
+        {showOptionsMenu && (
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
@@ -137,23 +184,31 @@ export default function PostCard({
               </svg>
             </button>
             {showMenu && (
-              <div className="absolute left-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-10 min-w-[120px]">
+              <div className="absolute left-0 top-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-10 min-w-[160px]">
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setEditContent(displayContent);
+                      setEditing(true);
+                    }}
+                    className="w-full text-right px-4 py-2.5 text-sm text-emerald-400 hover:bg-zinc-700/50 transition-colors cursor-pointer"
+                  >
+                    تعديل المنشور
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={handleCopyPostId}
+                    className="w-full text-right px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700/50 transition-colors cursor-pointer"
+                  >
+                    نسخ معرّف المنشور
+                  </button>
+                )}
                 <button
-                  onClick={async () => {
-                    setShowMenu(false);
-                    if (!confirm("هل أنت متأكد من حذف هذا المنشور؟")) return;
-                    setDeleting(true);
-                    try {
-                      await deletePost(post.id);
-                      router.push("/");
-                      router.refresh();
-                    } catch (err) {
-                      console.error(err);
-                      setDeleting(false);
-                    }
-                  }}
+                  onClick={handleDelete}
                   disabled={deleting}
-                  className="w-full text-right px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-700/50 transition-colors cursor-pointer rounded-lg disabled:opacity-50"
+                  className="w-full text-right px-4 py-2.5 text-sm text-red-400 hover:bg-zinc-700/50 transition-colors cursor-pointer rounded-b-lg disabled:opacity-50"
                 >
                   {deleting ? "جاري الحذف..." : "حذف المنشور"}
                 </button>
@@ -170,18 +225,42 @@ export default function PostCard({
         </span>
       )}
 
-      {/* Content */}
-      {post.content && (
+      {/* Content — edit mode or display mode */}
+      {editing ? (
+        <div className="space-y-2">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[80px] resize-y"
+            dir="rtl"
+          />
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setEditing(false)}
+              className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleAdminEdit}
+              disabled={saving || !editContent.trim()}
+              className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? "جاري الحفظ..." : "حفظ"}
+            </button>
+          </div>
+        </div>
+      ) : displayContent ? (
         <div className="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
           {permalink ? (
-            <Linkify text={post.content} />
+            <Linkify text={displayContent} />
           ) : (
             <Link href={`/post/${post.id}`} className="block">
-              <Linkify text={post.content} />
+              <Linkify text={displayContent} />
             </Link>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Media images */}
       {images.length > 0 && (
@@ -268,10 +347,15 @@ export default function PostCard({
             تم نسخ الرابط
           </div>
         )}
+        {copyIdToast && (
+          <div className="absolute left-2 bottom-full mb-2 bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+            تم نسخ معرّف المنشور
+          </div>
+        )}
       </div>
 
       {/* Comments section */}
-      <CommentsSection postId={post.id} userId={userId} forceOpen={showComments} onCommentsCountChange={onCommentsCountChange} />
+      <CommentsSection postId={post.id} userId={userId} forceOpen={showComments} onCommentsCountChange={onCommentsCountChange} isAdmin={isAdmin} />
     </article>
   );
 }

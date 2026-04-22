@@ -13,12 +13,14 @@ export default function ProfileTabs({
   likedPosts,
   userId,
   isOwnProfile,
+  isAdmin = false,
 }: {
   regularPosts: Post[];
   tipPosts: Post[];
   likedPosts: Post[];
   userId: string | null;
   isOwnProfile: boolean;
+  isAdmin?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("posts");
 
@@ -62,7 +64,7 @@ export default function ProfileTabs({
             </p>
           ) : (
             regularPosts.map((post) => (
-              <PostCard key={post.id} post={post} userId={userId} />
+              <PostCard key={post.id} post={post} userId={userId} isAdmin={isAdmin} />
             ))
           )}
         </div>
@@ -81,6 +83,7 @@ export default function ProfileTabs({
                 post={post}
                 userId={userId}
                 canSettle={isOwnProfile || false}
+                isAdmin={isAdmin}
               />
             ))
           )}
@@ -101,9 +104,10 @@ export default function ProfileTabs({
                   post={post}
                   userId={userId}
                   canSettle={false}
+                  isAdmin={isAdmin}
                 />
               ) : (
-                <PostCard key={post.id} post={post} userId={userId} />
+                <PostCard key={post.id} post={post} userId={userId} isAdmin={isAdmin} />
               )
             )
           )}

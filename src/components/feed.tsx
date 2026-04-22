@@ -8,7 +8,7 @@ import PostCard from "./post-card";
 import TipCard from "./tip-card";
 import Link from "next/link";
 
-export default function Feed({ userId }: { userId: string | null }) {
+export default function Feed({ userId, isAdmin = false }: { userId: string | null; isAdmin?: boolean }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -126,9 +126,9 @@ export default function Feed({ userId }: { userId: string | null }) {
         <>
           {posts.map((post) =>
             post.tip_data ? (
-              <TipCard key={post.id} post={post} userId={userId} />
+              <TipCard key={post.id} post={post} userId={userId} isAdmin={isAdmin} />
             ) : (
-              <PostCard key={post.id} post={post} userId={userId} />
+              <PostCard key={post.id} post={post} userId={userId} isAdmin={isAdmin} />
             )
           )}
 

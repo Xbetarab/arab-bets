@@ -69,6 +69,8 @@ export default async function PostPage({ params }: Props) {
     notFound();
   }
 
+  const isAdmin = user?.email === "uomankotd@gmail.com";
+
   let profile = null;
   if (user) {
     const { data } = await supabase
@@ -101,12 +103,14 @@ export default async function PostPage({ params }: Props) {
           <TipCard
             post={post as unknown as Post}
             userId={user?.id ?? null}
+            isAdmin={isAdmin}
           />
         ) : (
           <PostCard
             post={post as unknown as Post}
             userId={user?.id ?? null}
             permalink
+            isAdmin={isAdmin}
           />
         )}
       </main>

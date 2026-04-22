@@ -232,6 +232,115 @@ export async function adminSetFollowersCount(
   revalidatePath("/");
 }
 
+export async function adminEditPost(postId: string, content: string) {
+  const supabase = await assertAdmin();
+  const { error } = await supabase
+    .from("posts")
+    .update({ content })
+    .eq("id", postId);
+  if (error) {
+    console.error("adminEditPost failed:", error);
+    throw new Error("فشل تعديل المنشور: " + error.message);
+  }
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function adminDeletePost(postId: string) {
+  const supabase = await assertAdmin();
+
+  // Delete related data first
+  const { data: commentIds } = await supabase
+    .from("comments")
+    .select("id")
+    .eq("post_id", postId);
+
+  if (commentIds && commentIds.length > 0) {
+    const ids = commentIds.map((c: { id: string }) => c.id);
+    await supabase.from("comment_likes").delete().in("comment_id", ids);
+  }
+
+  await supabase.from("comments").delete().eq("post_id", postId);
+  await supabase
+    .from("likes")
+    .delete()
+    .eq("target_id", postId)
+    .eq("target_type", "post");
+
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  if (error) {
+    console.error("adminDeletePost failed:", error);
+    throw new Error("فشل حذف المنشور: " + error.message);
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function adminEditComment(commentId: string, content: string) {
+  const supabase = await assertAdmin();
+  const { error } = await supabase
+    .from("comments")
+    .update({ content })
+    .eq("id", commentId);
+  if (error) {
+    console.error("adminEditComment failed:", error);
+    throw new Error("فشل تعديل التعليق: " + error.message);
+  }
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function adminDeleteComment(commentId: string) {
+  const supabase = await assertAdmin();
+
+  // Get post_id for count update
+  const { data: comment } = await supabase
+    .from("comments")
+    .select("post_id")
+    .eq("id", commentId)
+    .single();
+
+  // Delete child comments first
+  const { data: childIds } = await supabase
+    .from("comments")
+    .select("id")
+    .eq("parent_id", commentId);
+
+  if (childIds && childIds.length > 0) {
+    const ids = childIds.map((c: { id: string }) => c.id);
+    await supabase.from("comment_likes").delete().in("comment_id", ids);
+    await supabase.from("comments").delete().in("id", ids);
+  }
+
+  await supabase.from("comment_likes").delete().eq("comment_id", commentId);
+  const { error } = await supabase.from("comments").delete().eq("id", commentId);
+  if (error) {
+    console.error("adminDeleteComment failed:", error);
+    throw new Error("فشل حذف التعليق: " + error.message);
+  }
+
+  // Decrement comments_count
+  if (comment) {
+    const deletedCount = 1 + (childIds?.length ?? 0);
+    const { data: currentPost } = await supabase
+      .from("posts")
+      .select("comments_count")
+      .eq("id", comment.post_id)
+      .single();
+    if (currentPost) {
+      const newCount = Math.max(0, (currentPost.comments_count ?? 0) - deletedCount);
+      await supabase
+        .from("posts")
+        .update({ comments_count: newCount })
+        .eq("id", comment.post_id);
+    }
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function adminCreatePost(
   content: string,
   sport: string | null,

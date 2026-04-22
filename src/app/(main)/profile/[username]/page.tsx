@@ -212,6 +212,7 @@ export default async function ProfilePage({ params }: Props) {
         likedPosts={likedPosts}
         userId={user?.id ?? null}
         isOwnProfile={isOwnProfile}
+        isAdmin={user?.email === "uomankotd@gmail.com"}
       />
     </div>
   );

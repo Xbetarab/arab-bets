@@ -898,3 +898,136 @@ export async function importCommentsOnly(
     errors,
   };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Cleanup: reassign all stale ghost content to valid pool identities */
+/* ------------------------------------------------------------------ */
+
+export type CleanupResult = {
+  postsReassigned: number;
+  commentsReassigned: number;
+  staleProfilesDeleted: number;
+  errors: string[];
+};
+
+/**
+ * Finds ALL posts and comments authored by profiles NOT in the ghost pool
+ * (excluding admin accounts) and reassigns them to valid ghost pool identities.
+ * Then deletes the stale profiles.
+ */
+export async function cleanupStaleGhostContent(): Promise<CleanupResult> {
+  const supabase = await assertAdmin();
+  const errors: string[] = [];
+  let postsReassigned = 0;
+  let commentsReassigned = 0;
+  let staleProfilesDeleted = 0;
+
+  // Load ghost pool
+  const ghostPool = await loadGhostPool(supabase);
+  const poolUsernameSet = new Set(ghostPool.map(g => g.username));
+  const profileCache = new Map<string, string>();
+  const newProfileCount = { count: 0 };
+  const batchUsageCounts = new Map<string, number>();
+
+  // Admin profile IDs to exclude from cleanup
+  const ADMIN_USERNAMES = ["one", "user_8fdbc0d9"];
+
+  // Step 1: Find all stale profiles (have content but NOT in ghost pool)
+  const { data: staleProfiles } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .limit(10000);
+
+  if (!staleProfiles) {
+    return { postsReassigned: 0, commentsReassigned: 0, staleProfilesDeleted: 0, errors: ["Failed to load profiles"] };
+  }
+
+  // Filter to stale ghost profiles (not in pool, not admin)
+  const staleProfileList = staleProfiles.filter(
+    p => !poolUsernameSet.has(p.username) && !ADMIN_USERNAMES.includes(p.username)
+  );
+
+  if (staleProfileList.length === 0) {
+    return { postsReassigned: 0, commentsReassigned: 0, staleProfilesDeleted: 0, errors: ["No stale profiles found"] };
+  }
+
+  // Pre-load existing pool profiles into cache
+  for (const p of staleProfiles) {
+    if (poolUsernameSet.has(p.username)) {
+      profileCache.set(p.username, p.id);
+    }
+  }
+
+  // Step 2: For each stale profile, pick a valid pool identity and reassign content
+  for (const stale of staleProfileList) {
+    try {
+      // Pick a weighted random pool identity for this stale profile
+      const picked = weightedPickGhost(ghostPool, "comment", batchUsageCounts);
+      const newProfileId = await ensureGhostProfile(supabase, picked, profileCache, newProfileCount);
+      batchUsageCounts.set(picked.username, (batchUsageCounts.get(picked.username) ?? 0) + 1);
+
+      // Reassign all posts from this stale profile
+      const { data: stalePosts } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("author_id", stale.id);
+
+      if (stalePosts && stalePosts.length > 0) {
+        const { error: postErr } = await supabase
+          .from("posts")
+          .update({ author_id: newProfileId })
+          .eq("author_id", stale.id);
+        if (postErr) {
+          errors.push(`Failed to reassign posts from ${stale.username}: ${postErr.message}`);
+        } else {
+          postsReassigned += stalePosts.length;
+        }
+      }
+
+      // Reassign all comments from this stale profile
+      const { data: staleComments } = await supabase
+        .from("comments")
+        .select("id")
+        .eq("author_id", stale.id);
+
+      if (staleComments && staleComments.length > 0) {
+        const { error: commentErr } = await supabase
+          .from("comments")
+          .update({ author_id: newProfileId })
+          .eq("author_id", stale.id);
+        if (commentErr) {
+          errors.push(`Failed to reassign comments from ${stale.username}: ${commentErr.message}`);
+        } else {
+          commentsReassigned += staleComments.length;
+        }
+      }
+
+      // Step 3: Delete the stale profile (and its auth.users entry)
+      // First delete profile, then auth user
+      const { error: delProfileErr } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", stale.id);
+
+      if (delProfileErr) {
+        errors.push(`Failed to delete stale profile ${stale.username}: ${delProfileErr.message}`);
+      } else {
+        // Try to delete the auth.users entry too
+        await supabase.auth.admin.deleteUser(stale.id);
+        staleProfilesDeleted++;
+      }
+    } catch (e) {
+      errors.push(`Error processing ${stale.username}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/import");
+
+  return {
+    postsReassigned,
+    commentsReassigned,
+    staleProfilesDeleted,
+    errors,
+  };
+}

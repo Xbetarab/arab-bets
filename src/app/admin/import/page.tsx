@@ -7,9 +7,11 @@ import {
   uploadGhostIdentities,
   getGhostPoolStats,
   clearGhostPool,
+  cleanupStaleGhostContent,
   type ImportResult,
   type GhostPoolStats,
   type GhostUploadResult,
+  type CleanupResult,
 } from "./actions";
 
 function ResultCard({ result }: { result: ImportResult }) {
@@ -94,6 +96,10 @@ export default function ImportPage() {
     null
   );
   const commentsInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup
+  const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
+  const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
 
   // Progress
   const [progress, setProgress] = useState("");
@@ -284,6 +290,31 @@ export default function ImportPage() {
           postsCreated: 0,
           commentsCreated: 0,
           profilesCreated: 0,
+          errors: [msg],
+        });
+        setProgress("");
+      }
+    });
+  }
+
+  function handleCleanup() {
+    setShowCleanupConfirm(false);
+    setCleanupResult(null);
+    setProgress("جاري تنظيف الحسابات القديمة...");
+    startTransition(async () => {
+      try {
+        const result = await cleanupStaleGhostContent();
+        setCleanupResult(result);
+        setProgress("");
+        // Refresh pool stats
+        const stats = await getGhostPoolStats();
+        setPoolStats(stats);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCleanupResult({
+          postsReassigned: 0,
+          commentsReassigned: 0,
+          staleProfilesDeleted: 0,
           errors: [msg],
         });
         setProgress("");
@@ -775,6 +806,79 @@ export default function ImportPage() {
           </div>
           <div>• جميع المحتوى المستورد يكون معتمد تلقائياً (is_approved = true)</div>
         </div>
+      </div>
+
+      {/* Section 4: Cleanup stale ghost profiles */}
+      <div className="bg-zinc-900 border border-red-600/30 rounded-xl p-4 space-y-4">
+        <div>
+          <h2 className="text-sm font-medium text-red-400">
+            تنظيف الحسابات الشبحية القديمة
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">
+            يبحث عن جميع المنشورات والتعليقات المرتبطة بحسابات شبحية قديمة (غير موجودة في المخزون الحالي)
+            ويعيد تعيينها لحسابات من المخزون الحالي، ثم يحذف الحسابات القديمة.
+          </p>
+        </div>
+
+        {!showCleanupConfirm ? (
+          <button
+            onClick={() => setShowCleanupConfirm(true)}
+            disabled={isPending}
+            className="w-full bg-red-600 hover:bg-red-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+          >
+            تنظيف الحسابات القديمة
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="bg-red-600/10 border border-red-600/20 rounded-lg p-3 text-xs text-red-400">
+              ⚠️ هذا الإجراء سيقوم بـ:
+              <ul className="mt-1 space-y-0.5 mr-3">
+                <li>• نقل جميع المنشورات/التعليقات من الحسابات القديمة إلى حسابات من المخزون</li>
+                <li>• حذف جميع الحسابات الشبحية القديمة نهائياً</li>
+              </ul>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCleanup}
+                disabled={isPending}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors min-h-[44px]"
+              >
+                نعم، نفّذ التنظيف
+              </button>
+              <button
+                onClick={() => setShowCleanupConfirm(false)}
+                className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium px-4 py-3 rounded-lg transition-colors min-h-[44px]"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Cleanup result */}
+        {cleanupResult && (
+          <div className={`text-sm px-4 py-3 rounded-lg border ${
+            cleanupResult.errors.length === 0
+              ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20"
+              : "bg-yellow-600/10 text-yellow-400 border-yellow-600/20"
+          }`}>
+            <div className="font-medium mb-2">
+              {cleanupResult.errors.length === 0 ? "تم التنظيف بنجاح!" : "تم التنظيف مع بعض الأخطاء"}
+            </div>
+            <div className="space-y-1 text-xs">
+              <div>منشورات أُعيد تعيينها: <span className="font-bold">{cleanupResult.postsReassigned}</span></div>
+              <div>تعليقات أُعيد تعيينها: <span className="font-bold">{cleanupResult.commentsReassigned}</span></div>
+              <div>حسابات قديمة حُذفت: <span className="font-bold">{cleanupResult.staleProfilesDeleted}</span></div>
+            </div>
+            {cleanupResult.errors.length > 0 && (
+              <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                {cleanupResult.errors.map((err, i) => (
+                  <div key={i} className="text-xs text-red-300/80">• {err}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

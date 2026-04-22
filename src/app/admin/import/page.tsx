@@ -735,20 +735,17 @@ export default function ImportPage() {
             {`{
   "posts": [
     {
-      "author_username": "username",
       "content": "محتوى المنشور...",
       "sport": "كرة قدم",
       "created_at": "2026-04-10T14:30:00Z",
       "likes_count": 347,
       "comments": [
         {
-          "author_username": "commenter",
           "content": "تعليق...",
           "created_at": "2026-04-10T15:10:00Z",
           "likes_count": 23,
           "replies": [
             {
-              "author_username": "replier",
               "content": "رد...",
               "created_at": "2026-04-10T15:25:00Z",
               "likes_count": 8
@@ -774,7 +771,6 @@ export default function ImportPage() {
       "post_id": "uuid-of-existing-post",
       "entries": [
         {
-          "author_username": "commenter",
           "content": "تعليق...",
           "created_at": "2026-04-10T16:00:00Z",
           "likes_count": 12,
@@ -789,8 +785,9 @@ export default function ImportPage() {
 
         <div className="text-xs text-zinc-500 space-y-1">
           <div>
-            • <code className="text-zinc-400">author_username</code>: يجب أن
-            يطابق حساب موجود أو حساب في مخزون الحسابات الشبحية. إذا لم يتطابق، سيتم اختيار هوية عشوائية من المخزون
+            • <code className="text-zinc-400">author_username</code>: اختياري
+            — إذا تم تحديده يجب أن يكون موجوداً في المخزون. إذا لم يُحدد، يتم
+            اختيار هوية تلقائياً من المخزون
           </div>
           <div>
             • <code className="text-zinc-400">sport</code>: اختياري — كرة قدم،

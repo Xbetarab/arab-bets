@@ -20,14 +20,14 @@ async function assertAdmin() {
 /* ------------------------------------------------------------------ */
 
 type ImportReply = {
-  author_username: string;
+  author_username?: string;
   content: string;
   created_at: string;
   likes_count?: number;
 };
 
 type ImportComment = {
-  author_username: string;
+  author_username?: string;
   content: string;
   created_at: string;
   likes_count?: number;
@@ -35,7 +35,7 @@ type ImportComment = {
 };
 
 type ImportPost = {
-  author_username: string;
+  author_username?: string;
   content: string;
   sport?: string;
   created_at: string;
@@ -469,7 +469,7 @@ async function ensureGhostProfile(
  */
 async function resolveProfileId(
   supabase: ReturnType<typeof createAdminClient>,
-  username: string,
+  username: string | undefined,
   profileCache: Map<string, string>,
   newProfileCount: { count: number },
   ghostPool: GhostIdentityRow[],
@@ -477,29 +477,32 @@ async function resolveProfileId(
   context: "post" | "comment",
   poolUsernameSet: Set<string>
 ): Promise<string> {
-  // Step 1: Check if this exact username exists in the ghost pool
-  // Use poolUsernameSet for fast O(1) lookup before scanning the array
-  const inPool = poolUsernameSet.has(username);
-  const poolEntry = inPool ? ghostPool.find(g => g.username === username) : null;
+  // If username is provided and exists in the pool, use it directly
+  if (username) {
+    const inPool = poolUsernameSet.has(username);
+    const poolEntry = inPool ? ghostPool.find(g => g.username === username) : null;
 
-  if (poolEntry) {
-    // Username is in the pool — use it directly
-    const cached = profileCache.get(poolEntry.username);
-    if (cached) {
+    if (poolEntry) {
+      const cached = profileCache.get(poolEntry.username);
+      if (cached) {
+        batchUsageCounts.set(poolEntry.username, (batchUsageCounts.get(poolEntry.username) ?? 0) + 1);
+        return cached;
+      }
+      const id = await ensureGhostProfile(supabase, poolEntry, profileCache, newProfileCount);
       batchUsageCounts.set(poolEntry.username, (batchUsageCounts.get(poolEntry.username) ?? 0) + 1);
-      return cached;
+      return id;
     }
-    const id = await ensureGhostProfile(supabase, poolEntry, profileCache, newProfileCount);
-    batchUsageCounts.set(poolEntry.username, (batchUsageCounts.get(poolEntry.username) ?? 0) + 1);
-    return id;
   }
 
-  // Step 2: Username NOT in pool — pick a weighted random identity from pool
-  // This remaps the unknown username to a valid pool identity
+  // Username missing OR not in pool → auto-assign from pool via weighted selection
   const picked = weightedPickGhost(ghostPool, context, batchUsageCounts);
   const cachedPicked = profileCache.get(picked.username);
-  if (cachedPicked) return cachedPicked;
+  if (cachedPicked) {
+    batchUsageCounts.set(picked.username, (batchUsageCounts.get(picked.username) ?? 0) + 1);
+    return cachedPicked;
+  }
   const id = await ensureGhostProfile(supabase, picked, profileCache, newProfileCount);
+  batchUsageCounts.set(picked.username, (batchUsageCounts.get(picked.username) ?? 0) + 1);
   return id;
 }
 
@@ -548,7 +551,7 @@ async function insertComment(
       .single();
 
     if (error) {
-      errors.push(`Comment by "${comment.author_username}": ${error.message}`);
+      errors.push(`Comment by "${comment.author_username ?? "auto"}": ${error.message}`);
       return count;
     }
 
@@ -657,10 +660,10 @@ export async function importPostsWithComments(
   for (let i = 0; i < data.posts.length; i++) {
     const post = data.posts[i];
 
-    // Validate required fields
-    if (!post.author_username || !post.content || !post.created_at) {
+    // Validate required fields (author_username is now optional)
+    if (!post.content || !post.created_at) {
       errors.push(
-        `منشور ${i + 1}: حقول مطلوبة مفقودة (author_username, content, created_at)`
+        `منشور ${i + 1}: حقول مطلوبة مفقودة (content, created_at)`
       );
       continue;
     }
@@ -715,9 +718,9 @@ export async function importPostsWithComments(
       // Insert comments
       if (post.comments && insertedPost) {
         for (const comment of post.comments) {
-          if (!comment.author_username || !comment.content || !comment.created_at) {
+          if (!comment.content || !comment.created_at) {
             errors.push(
-              `تعليق في المنشور ${i + 1}: حقول مطلوبة مفقودة`
+              `تعليق في المنشور ${i + 1}: حقول مطلوبة مفقودة (content, created_at)`
             );
             continue;
           }
@@ -847,9 +850,9 @@ export async function importCommentsOnly(
     let entryCommentCount = 0;
 
     for (const comment of entry.entries) {
-      if (!comment.author_username || !comment.content || !comment.created_at) {
+      if (!comment.content || !comment.created_at) {
         errors.push(
-          `تعليق في المجموعة ${i + 1}: حقول مطلوبة مفقودة`
+          `تعليق في المجموعة ${i + 1}: حقول مطلوبة مفقودة (content, created_at)`
         );
         continue;
       }

@@ -454,9 +454,19 @@ async function ensureGhostProfile(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Helper: resolve username → profile id (smart pool-based)            */
+/*  Helper: resolve username → profile id (strict pool-only)            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Resolves a username from the import JSON to a profile ID.
+ *
+ * STRICT RULE: Only ghost identities from the current ghost_identities
+ * pool may be used. Old/deleted ghost profiles are NEVER reused.
+ *
+ * 1. If the username exists in the ghost pool → use that identity
+ * 2. If not → pick a weighted random identity from the pool
+ * 3. Never fall back to old profiles that aren't in the pool
+ */
 async function resolveProfileId(
   supabase: ReturnType<typeof createAdminClient>,
   username: string,
@@ -464,39 +474,32 @@ async function resolveProfileId(
   newProfileCount: { count: number },
   ghostPool: GhostIdentityRow[],
   batchUsageCounts: Map<string, number>,
-  context: "post" | "comment"
+  context: "post" | "comment",
+  poolUsernameSet: Set<string>
 ): Promise<string> {
-  // Check cache first
-  const cached = profileCache.get(username);
-  if (cached) return cached;
-
-  // Look up in DB
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("username", username)
-    .maybeSingle();
-
-  if (existing) {
-    profileCache.set(username, existing.id);
-    return existing.id;
-  }
-
-  // Username not found — check if it exists in the ghost pool
-  const poolEntry = ghostPool.find(g => g.username === username);
+  // Step 1: Check if this exact username exists in the ghost pool
+  // Use poolUsernameSet for fast O(1) lookup before scanning the array
+  const inPool = poolUsernameSet.has(username);
+  const poolEntry = inPool ? ghostPool.find(g => g.username === username) : null;
 
   if (poolEntry) {
-    // Create ghost profile from this specific pool entry
+    // Username is in the pool — use it directly
+    const cached = profileCache.get(poolEntry.username);
+    if (cached) {
+      batchUsageCounts.set(poolEntry.username, (batchUsageCounts.get(poolEntry.username) ?? 0) + 1);
+      return cached;
+    }
     const id = await ensureGhostProfile(supabase, poolEntry, profileCache, newProfileCount);
     batchUsageCounts.set(poolEntry.username, (batchUsageCounts.get(poolEntry.username) ?? 0) + 1);
     return id;
   }
 
-  // Not in profiles and not in pool — pick a weighted random identity
+  // Step 2: Username NOT in pool — pick a weighted random identity from pool
+  // This remaps the unknown username to a valid pool identity
   const picked = weightedPickGhost(ghostPool, context, batchUsageCounts);
+  const cachedPicked = profileCache.get(picked.username);
+  if (cachedPicked) return cachedPicked;
   const id = await ensureGhostProfile(supabase, picked, profileCache, newProfileCount);
-  // Also cache the original username pointing to this profile
-  profileCache.set(username, id);
   return id;
 }
 
@@ -513,7 +516,8 @@ async function insertComment(
   newProfileCount: { count: number },
   errors: string[],
   ghostPool: GhostIdentityRow[],
-  batchUsageCounts: Map<string, number>
+  batchUsageCounts: Map<string, number>,
+  poolUsernameSet: Set<string>
 ): Promise<number> {
   let count = 0;
 
@@ -525,7 +529,8 @@ async function insertComment(
       newProfileCount,
       ghostPool,
       batchUsageCounts,
-      "comment"
+      "comment",
+      poolUsernameSet
     );
 
     const { data: inserted, error } = await supabase
@@ -565,7 +570,8 @@ async function insertComment(
           newProfileCount,
           errors,
           ghostPool,
-          batchUsageCounts
+          batchUsageCounts,
+          poolUsernameSet
         );
         count += replyCount;
       }
@@ -632,13 +638,19 @@ export async function importPostsWithComments(
     };
   }
 
-  // Pre-load all existing profiles into cache for speed
+  // Build a set of valid ghost pool usernames for strict enforcement
+  const poolUsernameSet = new Set(ghostPool.map(g => g.username));
+
+  // Pre-load ONLY profiles that belong to the current ghost pool into cache
+  // This prevents old/deleted ghost profiles from being used
   const { data: allProfiles } = await supabase
     .from("profiles")
     .select("id, username")
-    .limit(5000);
+    .limit(10000);
   for (const p of allProfiles ?? []) {
-    profileCache.set(p.username, p.id);
+    if (poolUsernameSet.has(p.username)) {
+      profileCache.set(p.username, p.id);
+    }
   }
 
   // Process each post
@@ -654,7 +666,7 @@ export async function importPostsWithComments(
     }
 
     try {
-      // Resolve author (context: "post")
+      // Resolve author (context: "post") — strict pool-only
       const authorId = await resolveProfileId(
         supabase,
         post.author_username,
@@ -662,7 +674,8 @@ export async function importPostsWithComments(
         newProfileCount,
         ghostPool,
         batchUsageCounts,
-        "post"
+        "post",
+        poolUsernameSet
       );
 
       // Map sport
@@ -717,7 +730,8 @@ export async function importPostsWithComments(
             newProfileCount,
             errors,
             ghostPool,
-            batchUsageCounts
+            batchUsageCounts,
+            poolUsernameSet
           );
           commentsCreated += commentCount;
         }
@@ -791,13 +805,18 @@ export async function importCommentsOnly(
     };
   }
 
-  // Pre-load all existing profiles into cache
+  // Build a set of valid ghost pool usernames for strict enforcement
+  const poolUsernameSet = new Set(ghostPool.map(g => g.username));
+
+  // Pre-load ONLY profiles that belong to the current ghost pool into cache
   const { data: allProfiles } = await supabase
     .from("profiles")
     .select("id, username")
-    .limit(5000);
+    .limit(10000);
   for (const p of allProfiles ?? []) {
-    profileCache.set(p.username, p.id);
+    if (poolUsernameSet.has(p.username)) {
+      profileCache.set(p.username, p.id);
+    }
   }
 
   // Process each post's comments
@@ -843,7 +862,8 @@ export async function importCommentsOnly(
         newProfileCount,
         errors,
         ghostPool,
-        batchUsageCounts
+        batchUsageCounts,
+        poolUsernameSet
       );
       commentsCreated += count;
       entryCommentCount += count;

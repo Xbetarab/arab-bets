@@ -372,15 +372,12 @@ function weightedPickGhost(
   for (let i = 0; i < pool.length; i++) {
     random -= weights[i];
     if (random <= 0) {
-      batchUsageCounts.set(pool[i].username, (batchUsageCounts.get(pool[i].username) ?? 0) + 1);
       return pool[i];
     }
   }
 
   // Fallback (should not reach here)
-  const last = pool[pool.length - 1];
-  batchUsageCounts.set(last.username, (batchUsageCounts.get(last.username) ?? 0) + 1);
-  return last;
+  return pool[pool.length - 1];
 }
 
 /** Load the full ghost identity pool from DB */
@@ -684,15 +681,6 @@ export async function importPostsWithComments(
       // Map sport
       const sportValue = post.sport ? SPORT_MAP[post.sport] || null : null;
 
-      // Count total comments (comments + their replies)
-      let totalComments = 0;
-      if (post.comments) {
-        for (const c of post.comments) {
-          totalComments++;
-          if (c.replies) totalComments += c.replies.length;
-        }
-      }
-
       // Insert post
       const { data: insertedPost, error: postError } = await supabase
         .from("posts")
@@ -703,7 +691,7 @@ export async function importPostsWithComments(
           is_approved: true,
           created_at: validateTimestamp(post.created_at),
           likes_count: post.likes_count ?? 0,
-          comments_count: totalComments,
+          comments_count: 0, // trigger trg_comment_insert will increment for each comment
         })
         .select("id")
         .single();
@@ -847,8 +835,6 @@ export async function importCommentsOnly(
       continue;
     }
 
-    let entryCommentCount = 0;
-
     for (const comment of entry.entries) {
       if (!comment.content || !comment.created_at) {
         errors.push(
@@ -869,27 +855,9 @@ export async function importCommentsOnly(
         poolUsernameSet
       );
       commentsCreated += count;
-      entryCommentCount += count;
     }
 
-    // Update the post's comments_count
-    if (entryCommentCount > 0) {
-      // Get current count and add
-      const { data: currentPost } = await supabase
-        .from("posts")
-        .select("comments_count")
-        .eq("id", entry.post_id)
-        .single();
-
-      if (currentPost) {
-        await supabase
-          .from("posts")
-          .update({
-            comments_count: (currentPost.comments_count ?? 0) + entryCommentCount,
-          })
-          .eq("id", entry.post_id);
-      }
-    }
+    // comments_count is handled by trigger trg_comment_insert — no manual update needed
   }
 
   revalidatePath("/");

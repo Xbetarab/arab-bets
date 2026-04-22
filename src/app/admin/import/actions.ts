@@ -93,20 +93,22 @@ const SPORT_MAP: Record<string, string> = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Parse and validate a created_at string. If the resulting date is in
- * the future (clock-skew tolerance of 60 s), clamp it to "now".
- * Returns an ISO-8601 UTC string safe for DB insertion.
+ * Validate a created_at string. Rejects invalid dates and timestamps
+ * that are significantly in the future (beyond 60 s tolerance).
+ * Returns a normalized ISO-8601 UTC string, or throws with a clear message.
  */
-function clampTimestamp(raw: string): string {
+function validateTimestamp(raw: string): string {
   const parsed = new Date(raw);
   if (isNaN(parsed.getTime())) {
-    // Invalid date — return as-is and let the DB reject it
-    return raw;
+    throw new Error(
+      `تاريخ غير صالح: "${raw}". يجب أن يكون بتنسيق ISO-8601 صحيح.`
+    );
   }
   const now = Date.now();
   if (parsed.getTime() > now + 60_000) {
-    // Future timestamp — clamp to now
-    return new Date(now).toISOString();
+    throw new Error(
+      `التاريخ "${raw}" في المستقبل. يجب أن يكون created_at في الماضي أو الحاضر.`
+    );
   }
   return parsed.toISOString();
 }
@@ -534,7 +536,7 @@ async function insertComment(
         content: comment.content,
         parent_id: parentId,
         is_approved: true,
-        created_at: clampTimestamp(comment.created_at),
+        created_at: validateTimestamp(comment.created_at),
         likes_count: comment.likes_count ?? 0,
       })
       .select("id")
@@ -683,7 +685,7 @@ export async function importPostsWithComments(
           sport: sportValue,
           author_id: authorId,
           is_approved: true,
-          created_at: clampTimestamp(post.created_at),
+          created_at: validateTimestamp(post.created_at),
           likes_count: post.likes_count ?? 0,
           comments_count: totalComments,
         })

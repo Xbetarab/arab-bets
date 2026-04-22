@@ -89,6 +89,29 @@ const SPORT_MAP: Record<string, string> = {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Timestamp validation — clamp future dates to now                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Parse and validate a created_at string. If the resulting date is in
+ * the future (clock-skew tolerance of 60 s), clamp it to "now".
+ * Returns an ISO-8601 UTC string safe for DB insertion.
+ */
+function clampTimestamp(raw: string): string {
+  const parsed = new Date(raw);
+  if (isNaN(parsed.getTime())) {
+    // Invalid date — return as-is and let the DB reject it
+    return raw;
+  }
+  const now = Date.now();
+  if (parsed.getTime() > now + 60_000) {
+    // Future timestamp — clamp to now
+    return new Date(now).toISOString();
+  }
+  return parsed.toISOString();
+}
+
+/* ------------------------------------------------------------------ */
 /*  Smart Ghost Community System — types & actions                      */
 /* ------------------------------------------------------------------ */
 
@@ -511,7 +534,7 @@ async function insertComment(
         content: comment.content,
         parent_id: parentId,
         is_approved: true,
-        created_at: comment.created_at,
+        created_at: clampTimestamp(comment.created_at),
         likes_count: comment.likes_count ?? 0,
       })
       .select("id")
@@ -660,7 +683,7 @@ export async function importPostsWithComments(
           sport: sportValue,
           author_id: authorId,
           is_approved: true,
-          created_at: post.created_at,
+          created_at: clampTimestamp(post.created_at),
           likes_count: post.likes_count ?? 0,
           comments_count: totalComments,
         })

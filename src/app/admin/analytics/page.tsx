@@ -66,11 +66,11 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchAllAnalytics();
+      const result = await fetchAllAnalytics(force);
       setData(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع");
@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
           <p className="text-red-400 font-bold">خطأ</p>
           <p className="text-zinc-400 text-sm">{error}</p>
           <button
-            onClick={load}
+            onClick={() => load()}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
           >
             إعادة المحاولة
@@ -119,13 +119,20 @@ export default function AnalyticsPage() {
     <div className="space-y-8 max-w-5xl">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">التحليلات والإحصائيات</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white">التحليلات والإحصائيات</h1>
+          {data.cached_at && (
+            <p className="text-zinc-500 text-xs mt-1">
+              آخر تحديث: {new Date(data.cached_at).toLocaleString("ar-IQ", { timeZone: "Asia/Baghdad" })}
+            </p>
+          )}
+        </div>
         <button
-          onClick={load}
+          onClick={() => load(true)}
           disabled={loading}
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm rounded-lg transition-colors min-h-[44px] disabled:opacity-50"
         >
-          تحديث
+          {loading ? "جاري التحديث..." : "تحديث"}
         </button>
       </div>
 

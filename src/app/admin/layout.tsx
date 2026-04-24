@@ -57,6 +57,12 @@ export default async function AdminLayout({
           التحكم بالعدادات
         </Link>
         <Link
+          href="/admin/analytics"
+          className="block px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
+        >
+          التحليلات
+        </Link>
+        <Link
           href="/admin/settings"
           className="block px-3 py-2 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
         >
@@ -115,6 +121,12 @@ export default async function AdminLayout({
             className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
           >
             العدادات
+          </Link>
+          <Link
+            href="/admin/analytics"
+            className="flex-1 text-center px-3 py-2 rounded-lg text-xs text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors min-h-[44px] flex items-center justify-center"
+          >
+            التحليلات
           </Link>
           <Link
             href="/admin/settings"

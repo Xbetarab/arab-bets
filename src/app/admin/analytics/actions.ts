@@ -14,10 +14,47 @@ async function assertAdmin() {
   return createAdminClient();
 }
 
+// ── Shared helper: fetch all auth users via RPC ──
+
+type AuthUser = { id: string; email: string; created_at: string };
+
+async function fetchAllAuthUsers(
+  admin: ReturnType<typeof createAdminClient>
+): Promise<AuthUser[]> {
+  // Use the get_auth_users_for_analytics RPC function which queries auth.users directly.
+  // PostgREST limits results to 1000 per request, so we paginate.
+  const allUsers: AuthUser[] = [];
+  const pageSize = 1000;
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await admin.rpc("get_auth_users_for_analytics").range(offset, offset + pageSize - 1);
+    if (error) {
+      console.error("Error fetching auth users via RPC:", error);
+      break;
+    }
+    if (data && data.length > 0) {
+      for (const u of data) {
+        allUsers.push({
+          id: u.id,
+          email: u.email || "",
+          created_at: u.created_at,
+        });
+      }
+      if (data.length < pageSize) hasMore = false;
+      offset += pageSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allUsers;
+}
+
 // ── Time range helpers (Asia/Baghdad = UTC+3) ──
 
 function getBaghdadNow(): Date {
-  // Get current time in Baghdad timezone
   const now = new Date();
   const baghdadOffset = 3 * 60; // UTC+3 in minutes
   const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -73,54 +110,11 @@ export type UserRegistrationStats = {
   all_time: number;
 };
 
-export async function fetchUserRegistrationStats(): Promise<UserRegistrationStats> {
-  const supabase = await assertAdmin();
-  const ranges = getTimeRanges();
-
-  // Real users = auth.users with email NOT ending in @ghost.arabtips.com
-  const results: Record<string, number> = {};
-
-  for (const [key, range] of Object.entries(ranges)) {
-    const { data } = await supabase.rpc("exec_sql", {
-      query: `SELECT count(*)::int as cnt FROM auth.users WHERE email NOT LIKE '%@ghost.arabtips.com' AND created_at >= '${range.start}' AND created_at < '${range.end}'`,
-    });
-    // rpc exec_sql may not exist, fallback to management API approach
-    results[key] = data?.[0]?.cnt ?? 0;
-  }
-
-  return results as unknown as UserRegistrationStats;
-}
-
-// We'll use direct SQL via the admin client for auth.users queries
-// Since Supabase JS client can't query auth.users directly,
-// we'll use admin.auth.admin.listUsers and filter
-
 export async function fetchUserRegistrationStatsV2(): Promise<UserRegistrationStats> {
-  await assertAdmin();
-  const admin = createAdminClient();
+  const admin = await assertAdmin();
   const ranges = getTimeRanges();
 
-  // Fetch all auth users (paginated)
-  const allUsers: { email: string; created_at: string }[] = [];
-  let page = 1;
-  const perPage = 1000;
-  let hasMore = true;
-
-  while (hasMore) {
-    const { data } = await admin.auth.admin.listUsers({ page, perPage });
-    if (data?.users && data.users.length > 0) {
-      for (const u of data.users) {
-        allUsers.push({
-          email: u.email || "",
-          created_at: u.created_at,
-        });
-      }
-      if (data.users.length < perPage) hasMore = false;
-      page++;
-    } else {
-      hasMore = false;
-    }
-  }
+  const allUsers = await fetchAllAuthUsers(admin);
 
   // Filter out ghost accounts
   const realUsers = allUsers.filter(
@@ -253,27 +247,9 @@ export type RealVsGhostStats = {
 };
 
 export async function fetchRealVsGhostStats(): Promise<RealVsGhostStats> {
-  await assertAdmin();
-  const admin = createAdminClient();
+  const admin = await assertAdmin();
 
-  // Get all auth users to identify ghost vs real
-  const allUsers: { id: string; email: string }[] = [];
-  let page = 1;
-  const perPage = 1000;
-  let hasMore = true;
-
-  while (hasMore) {
-    const { data } = await admin.auth.admin.listUsers({ page, perPage });
-    if (data?.users && data.users.length > 0) {
-      for (const u of data.users) {
-        allUsers.push({ id: u.id, email: u.email || "" });
-      }
-      if (data.users.length < perPage) hasMore = false;
-      page++;
-    } else {
-      hasMore = false;
-    }
-  }
+  const allUsers = await fetchAllAuthUsers(admin);
 
   const ghostIds = new Set(
     allUsers.filter((u) => u.email.endsWith("@ghost.arabtips.com")).map((u) => u.id)
@@ -348,26 +324,9 @@ export type EngagementStats = {
 };
 
 export async function fetchEngagementStats(): Promise<EngagementStats> {
-  await assertAdmin();
-  const admin = createAdminClient();
+  const admin = await assertAdmin();
 
-  // Get all auth users
-  const allUsers: { id: string; email: string }[] = [];
-  let page = 1;
-  const perPage = 1000;
-  let hasMore = true;
-  while (hasMore) {
-    const { data } = await admin.auth.admin.listUsers({ page, perPage });
-    if (data?.users && data.users.length > 0) {
-      for (const u of data.users) {
-        allUsers.push({ id: u.id, email: u.email || "" });
-      }
-      if (data.users.length < perPage) hasMore = false;
-      page++;
-    } else {
-      hasMore = false;
-    }
-  }
+  const allUsers = await fetchAllAuthUsers(admin);
 
   const ghostIds = new Set(
     allUsers.filter((u) => u.email.endsWith("@ghost.arabtips.com")).map((u) => u.id)

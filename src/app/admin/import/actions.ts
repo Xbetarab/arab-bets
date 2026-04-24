@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import JSZip from "jszip";
 
 async function assertAdmin() {
   const userClient = await createClient();
@@ -999,6 +1000,212 @@ export async function cleanupStaleGhostContent(): Promise<CleanupResult> {
     postsReassigned,
     commentsReassigned,
     staleProfilesDeleted,
+    errors,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Ghost Avatar ZIP Upload + Auto-distribution                        */
+/* ------------------------------------------------------------------ */
+
+function guessContentType(filename: string): string | null {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    case "gif":
+      return "image/gif";
+    default:
+      return null;
+  }
+}
+
+export type ZipUploadResult = {
+  success: boolean;
+  uploaded: number;
+  assigned: number;
+  errors: string[];
+};
+
+/** Upload a ZIP of avatar images → ghost-avatars bucket → assign to ghost profiles without avatars */
+export async function uploadGhostAvatarsZip(
+  formData: FormData
+): Promise<ZipUploadResult> {
+  const supabase = await assertAdmin();
+  const errors: string[] = [];
+  let uploaded = 0;
+  let assigned = 0;
+
+  const file = formData.get("file") as File | null;
+  if (!file) {
+    return { success: false, uploaded: 0, assigned: 0, errors: ["لم يتم تحديد ملف"] };
+  }
+
+  // Extract ZIP
+  const arrayBuffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+
+  // Collect valid image entries
+  const imageEntries: { name: string; file: JSZip.JSZipObject }[] = [];
+  zip.forEach((relativePath, zipEntry) => {
+    if (zipEntry.dir) return;
+    // Skip macOS metadata files
+    if (relativePath.startsWith("__MACOSX/") || relativePath.startsWith(".")) return;
+    const contentType = guessContentType(relativePath);
+    if (!contentType) return;
+    imageEntries.push({ name: relativePath, file: zipEntry });
+  });
+
+  if (imageEntries.length === 0) {
+    return { success: false, uploaded: 0, assigned: 0, errors: ["لم يتم العثور على صور صالحة في الملف المضغوط (يدعم: jpg, png, webp, gif)"] };
+  }
+
+  // Upload each image to ghost-avatars bucket
+  const uploadedUrls: string[] = [];
+  for (const entry of imageEntries) {
+    const data = await entry.file.async("uint8array");
+    const contentType = guessContentType(entry.name)!;
+    const ext = entry.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("ghost-avatars")
+      .upload(storagePath, data, {
+        contentType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      errors.push(`فشل رفع "${entry.name}": ${uploadError.message}`);
+      continue;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("ghost-avatars")
+      .getPublicUrl(storagePath);
+
+    uploadedUrls.push(urlData.publicUrl);
+    uploaded++;
+  }
+
+  if (uploadedUrls.length === 0) {
+    return { success: false, uploaded: 0, assigned: 0, errors };
+  }
+
+  // Find ghost profiles without avatars (profiles that exist in ghost_identities pool)
+  const { data: ghostIdentities } = await supabase
+    .from("ghost_identities")
+    .select("username")
+    .limit(10000);
+
+  if (ghostIdentities && ghostIdentities.length > 0) {
+    const ghostUsernames = ghostIdentities.map((g: { username: string }) => g.username);
+
+    const { data: ghostProfiles } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_url")
+      .in("username", ghostUsernames)
+      .limit(10000);
+
+    const profilesWithoutAvatars = (ghostProfiles ?? []).filter(
+      (p: { avatar_url: string | null }) => !p.avatar_url
+    );
+
+    // Distribute avatars round-robin to profiles without avatars
+    for (let i = 0; i < profilesWithoutAvatars.length; i++) {
+      const avatarUrl = uploadedUrls[i % uploadedUrls.length];
+      const profile = profilesWithoutAvatars[i];
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: avatarUrl })
+        .eq("id", profile.id);
+
+      if (updateError) {
+        errors.push(`فشل تعيين صورة لـ "${profile.username}": ${updateError.message}`);
+      } else {
+        assigned++;
+      }
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/import");
+
+  return {
+    success: errors.length === 0,
+    uploaded,
+    assigned,
+    errors,
+  };
+}
+
+/** Upload a ZIP of cover images → preset-covers bucket */
+export async function uploadPresetCoversZip(
+  formData: FormData
+): Promise<ZipUploadResult> {
+  const supabase = await assertAdmin();
+  const errors: string[] = [];
+  let uploaded = 0;
+
+  const file = formData.get("file") as File | null;
+  if (!file) {
+    return { success: false, uploaded: 0, assigned: 0, errors: ["لم يتم تحديد ملف"] };
+  }
+
+  // Extract ZIP
+  const arrayBuffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+
+  // Collect valid image entries
+  const imageEntries: { name: string; file: JSZip.JSZipObject }[] = [];
+  zip.forEach((relativePath, zipEntry) => {
+    if (zipEntry.dir) return;
+    if (relativePath.startsWith("__MACOSX/") || relativePath.startsWith(".")) return;
+    const contentType = guessContentType(relativePath);
+    if (!contentType) return;
+    imageEntries.push({ name: relativePath, file: zipEntry });
+  });
+
+  if (imageEntries.length === 0) {
+    return { success: false, uploaded: 0, assigned: 0, errors: ["لم يتم العثور على صور صالحة في الملف المضغوط (يدعم: jpg, png, webp, gif)"] };
+  }
+
+  // Upload each image to preset-covers bucket
+  for (const entry of imageEntries) {
+    const data = await entry.file.async("uint8array");
+    const contentType = guessContentType(entry.name)!;
+    const ext = entry.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("preset-covers")
+      .upload(storagePath, data, {
+        contentType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      errors.push(`فشل رفع "${entry.name}": ${uploadError.message}`);
+      continue;
+    }
+
+    uploaded++;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/import");
+  revalidatePath("/profile/edit");
+
+  return {
+    success: errors.length === 0,
+    uploaded,
+    assigned: 0,
     errors,
   };
 }

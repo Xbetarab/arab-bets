@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 
 export async function updateProfile(data: {
   display_name: string;
-  bio: string;
   avatar_url: string | null;
   cover_url: string | null;
 }) {
@@ -19,7 +18,6 @@ export async function updateProfile(data: {
     .from("profiles")
     .update({
       display_name: data.display_name,
-      bio: data.bio || null,
       avatar_url: data.avatar_url,
       cover_url: data.cover_url,
     })

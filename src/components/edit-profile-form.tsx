@@ -13,7 +13,6 @@ export default function EditProfileForm({
 }: {
   profile: {
     display_name: string;
-    bio: string;
     avatar_url: string | null;
     cover_url: string | null;
   };
@@ -23,7 +22,6 @@ export default function EditProfileForm({
 }) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(profile.display_name);
-  const [bio, setBio] = useState(profile.bio);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [coverUrl, setCoverUrl] = useState(profile.cover_url);
   const [saving, setSaving] = useState(false);
@@ -97,7 +95,6 @@ export default function EditProfileForm({
     try {
       await updateProfile({
         display_name: displayName.trim(),
-        bio: bio.trim(),
         avatar_url: avatarUrl,
         cover_url: coverUrl,
       });
@@ -287,22 +284,6 @@ export default function EditProfileForm({
           className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
           placeholder="اسمك"
         />
-      </div>
-
-      {/* Bio */}
-      <div className="space-y-1.5">
-        <label className="block text-sm text-zinc-400 font-medium">
-          النبذة التعريفية
-        </label>
-        <textarea
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          maxLength={160}
-          rows={3}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
-          placeholder="أخبر الآخرين عنك..."
-        />
-        <p className="text-zinc-600 text-xs text-left">{bio.length}/160</p>
       </div>
 
       {/* Error / success */}

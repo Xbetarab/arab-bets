@@ -57,7 +57,6 @@ export default async function EditProfilePage() {
       <EditProfileForm
         profile={{
           display_name: profile.display_name ?? "",
-          bio: profile.bio ?? "",
           avatar_url: profile.avatar_url ?? null,
           cover_url: profile.cover_url ?? null,
         }}

@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, bio")
+    .select("display_name")
     .ilike("username", username)
     .single();
 
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${profile.display_name} (@${username}) | arabtips`,
-    description: profile.bio || `ملف ${profile.display_name} على arabtips`,
+    description: `ملف ${profile.display_name} على arabtips`,
   };
 }
 
@@ -171,13 +171,6 @@ export default async function ProfilePage({ params }: Props) {
             </Link>
           )}
         </div>
-
-        {/* Bio */}
-        {typedProfile.bio && (
-          <p className="text-zinc-300 text-sm mt-3 leading-relaxed">
-            {typedProfile.bio}
-          </p>
-        )}
 
         {/* Stats row */}
         <div className="flex items-center gap-4 mt-3 text-sm">

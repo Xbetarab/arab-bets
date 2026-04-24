@@ -8,10 +8,13 @@ import {
   getGhostPoolStats,
   clearGhostPool,
   cleanupStaleGhostContent,
+  uploadGhostAvatarsZip,
+  uploadPresetCoversZip,
   type ImportResult,
   type GhostPoolStats,
   type GhostUploadResult,
   type CleanupResult,
+  type ZipUploadResult,
 } from "./actions";
 
 function ResultCard({ result }: { result: ImportResult }) {
@@ -100,6 +103,16 @@ export default function ImportPage() {
   // Cleanup
   const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
   const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
+
+  // Ghost avatars ZIP
+  const [avatarZipFile, setAvatarZipFile] = useState<File | null>(null);
+  const [avatarZipResult, setAvatarZipResult] = useState<ZipUploadResult | null>(null);
+  const avatarZipInputRef = useRef<HTMLInputElement>(null);
+
+  // Preset covers ZIP
+  const [coversZipFile, setCoversZipFile] = useState<File | null>(null);
+  const [coversZipResult, setCoversZipResult] = useState<ZipUploadResult | null>(null);
+  const coversZipInputRef = useRef<HTMLInputElement>(null);
 
   // Progress
   const [progress, setProgress] = useState("");
@@ -292,6 +305,44 @@ export default function ImportPage() {
           profilesCreated: 0,
           errors: [msg],
         });
+        setProgress("");
+      }
+    });
+  }
+
+  function handleAvatarZipUpload() {
+    if (!avatarZipFile) return;
+    setAvatarZipResult(null);
+    setProgress("جاري رفع وتوزيع صور الحسابات الشبحية...");
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("file", avatarZipFile);
+        const result = await uploadGhostAvatarsZip(formData);
+        setAvatarZipResult(result);
+        setProgress("");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setAvatarZipResult({ success: false, uploaded: 0, assigned: 0, errors: [msg] });
+        setProgress("");
+      }
+    });
+  }
+
+  function handleCoversZipUpload() {
+    if (!coversZipFile) return;
+    setCoversZipResult(null);
+    setProgress("جاري رفع الأغلفة الجاهزة...");
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("file", coversZipFile);
+        const result = await uploadPresetCoversZip(formData);
+        setCoversZipResult(result);
+        setProgress("");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCoversZipResult({ success: false, uploaded: 0, assigned: 0, errors: [msg] });
         setProgress("");
       }
     });
@@ -568,6 +619,149 @@ export default function ImportPage() {
             <div>• أسماء المستخدمين المكررة يتم تخطيها تلقائياً</div>
             <div>• يدعم الأسماء بالعربية والإنجليزية</div>
           </div>
+        </div>
+      </div>
+
+      {/* Section: Ghost Avatars ZIP Upload */}
+      <div className="bg-zinc-900 border border-blue-600/30 rounded-xl p-4 space-y-4">
+        <div>
+          <h2 className="text-sm font-medium text-blue-400">
+            صور الحسابات الشبحية (ZIP)
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">
+            ارفع ملف ZIP يحتوي على صور (400×400px مربعة). سيتم رفعها وتوزيعها تلقائياً على الحسابات الشبحية التي ليس لها صورة.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <input
+            ref={avatarZipInputRef}
+            type="file"
+            accept=".zip,application/zip"
+            onChange={(e) => {
+              setAvatarZipFile(e.target.files?.[0] ?? null);
+              setAvatarZipResult(null);
+            }}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => avatarZipInputRef.current?.click()}
+            className="w-full border-2 border-dashed border-blue-700/50 hover:border-blue-500/50 rounded-lg px-4 py-6 text-center transition-colors cursor-pointer min-h-[44px]"
+          >
+            {avatarZipFile ? (
+              <div className="space-y-1">
+                <div className="text-sm text-blue-400">{avatarZipFile.name}</div>
+                <div className="text-xs text-zinc-500">
+                  {(avatarZipFile.size / 1024 / 1024).toFixed(2)} MB — اضغط لتغيير الملف
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-sm text-zinc-400">اضغط لاختيار ملف ZIP يحتوي على صور الأفاتار</div>
+                <div className="text-xs text-zinc-600">يدعم: jpg, png, webp, gif</div>
+              </div>
+            )}
+          </button>
+
+          <button
+            onClick={handleAvatarZipUpload}
+            disabled={isPending || !avatarZipFile}
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {isPending ? "جاري الرفع والتوزيع..." : "رفع وتوزيع الصور"}
+          </button>
+
+          {avatarZipResult && (
+            <div className={`text-sm px-4 py-3 rounded-lg border ${
+              avatarZipResult.errors.length === 0
+                ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20"
+                : "bg-red-600/10 text-red-400 border-red-600/20"
+            }`}>
+              <div className="space-y-1 text-xs">
+                <div>صور تم رفعها: <span className="font-bold">{avatarZipResult.uploaded}</span></div>
+                <div>حسابات تم تعيين صور لها: <span className="font-bold">{avatarZipResult.assigned}</span></div>
+              </div>
+              {avatarZipResult.errors.length > 0 && (
+                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                  {avatarZipResult.errors.map((err, i) => (
+                    <div key={i} className="text-xs text-red-300/80">{err}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Section: Preset Covers ZIP Upload */}
+      <div className="bg-zinc-900 border border-purple-600/30 rounded-xl p-4 space-y-4">
+        <div>
+          <h2 className="text-sm font-medium text-purple-400">
+            أغلفة جاهزة (ZIP)
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">
+            ارفع ملف ZIP يحتوي على صور أغلفة (1500×500px). ستظهر في صفحة تعديل الملف الشخصي كخيارات جاهزة للمستخدمين.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <input
+            ref={coversZipInputRef}
+            type="file"
+            accept=".zip,application/zip"
+            onChange={(e) => {
+              setCoversZipFile(e.target.files?.[0] ?? null);
+              setCoversZipResult(null);
+            }}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => coversZipInputRef.current?.click()}
+            className="w-full border-2 border-dashed border-purple-700/50 hover:border-purple-500/50 rounded-lg px-4 py-6 text-center transition-colors cursor-pointer min-h-[44px]"
+          >
+            {coversZipFile ? (
+              <div className="space-y-1">
+                <div className="text-sm text-purple-400">{coversZipFile.name}</div>
+                <div className="text-xs text-zinc-500">
+                  {(coversZipFile.size / 1024 / 1024).toFixed(2)} MB — اضغط لتغيير الملف
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-sm text-zinc-400">اضغط لاختيار ملف ZIP يحتوي على صور الأغلفة</div>
+                <div className="text-xs text-zinc-600">يدعم: jpg, png, webp, gif</div>
+              </div>
+            )}
+          </button>
+
+          <button
+            onClick={handleCoversZipUpload}
+            disabled={isPending || !coversZipFile}
+            className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {isPending ? "جاري رفع الأغلفة..." : "رفع الأغلفة"}
+          </button>
+
+          {coversZipResult && (
+            <div className={`text-sm px-4 py-3 rounded-lg border ${
+              coversZipResult.errors.length === 0
+                ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20"
+                : "bg-red-600/10 text-red-400 border-red-600/20"
+            }`}>
+              <div className="space-y-1 text-xs">
+                <div>أغلفة تم رفعها: <span className="font-bold">{coversZipResult.uploaded}</span></div>
+              </div>
+              {coversZipResult.errors.length > 0 && (
+                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                  {coversZipResult.errors.map((err, i) => (
+                    <div key={i} className="text-xs text-red-300/80">{err}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

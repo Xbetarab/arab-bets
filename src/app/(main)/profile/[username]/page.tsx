@@ -180,13 +180,13 @@ export default async function ProfilePage({ params }: Props) {
           </span>
           <span className="text-zinc-400">
             <span className="text-white font-medium">
-              {typedProfile.followers_count ?? 0}
+              {typedProfile.stats?.followers ?? 0}
             </span>{" "}
             متابع
           </span>
           <span className="text-zinc-400">
             <span className="text-white font-medium">
-              {typedProfile.following_count ?? 0}
+              {typedProfile.stats?.following ?? 0}
             </span>{" "}
             متابَع
           </span>

@@ -4,8 +4,7 @@ export type Profile = {
   display_name: string;
   avatar_url: string | null;
   cover_url: string | null;
-  followers_count: number;
-  following_count: number;
+  stats: { posts: number; followers: number; following: number } | null;
   created_at: string;
 };
 

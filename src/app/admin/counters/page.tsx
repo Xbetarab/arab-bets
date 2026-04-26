@@ -22,7 +22,7 @@ type ProfilePreview = {
   id: string;
   username: string;
   display_name: string;
-  followers_count: number;
+  stats: { posts: number; followers: number; following: number } | null;
 };
 
 export default function CountersPage() {
@@ -269,7 +269,7 @@ export default function CountersPage() {
             const supabase = createClient();
             const { data } = await supabase
               .from("profiles")
-              .select("id, username, display_name, followers_count")
+              .select("id, username, display_name, stats")
               .order("created_at", { ascending: false })
               .limit(50);
             setProfiles((data as ProfilePreview[]) ?? []);
@@ -288,7 +288,7 @@ export default function CountersPage() {
                 key={profile.id}
                 onClick={() => {
                   setSelectedProfile(profile);
-                  setProfileFollowers(profile.followers_count);
+                  setProfileFollowers(profile.stats?.followers ?? 0);
                 }}
                 className={`w-full text-right p-3 rounded-lg text-sm transition-colors cursor-pointer ${
                   selectedProfile?.id === profile.id
@@ -297,7 +297,7 @@ export default function CountersPage() {
                 }`}
               >
                 <p className="text-zinc-200">{profile.display_name} (@{profile.username})</p>
-                <p className="text-zinc-500 text-xs mt-1">👥 {profile.followers_count} متابع</p>
+                <p className="text-zinc-500 text-xs mt-1">👥 {profile.stats?.followers ?? 0} متابع</p>
               </button>
             ))}
           </div>
@@ -323,10 +323,10 @@ export default function CountersPage() {
                 try {
                   await adminSetFollowersCount(selectedProfile.id, profileFollowers);
                   setMessage({ type: "success", text: "تم تحديث عدد المتابعين" });
-                  setSelectedProfile({ ...selectedProfile, followers_count: profileFollowers });
+                  setSelectedProfile({ ...selectedProfile, stats: { ...(selectedProfile.stats ?? { posts: 0, followers: 0, following: 0 }), followers: profileFollowers } });
                   setProfiles((prev) =>
                     prev.map((p) =>
-                      p.id === selectedProfile.id ? { ...p, followers_count: profileFollowers } : p
+                      p.id === selectedProfile.id ? { ...p, stats: { ...(p.stats ?? { posts: 0, followers: 0, following: 0 }), followers: profileFollowers } } : p
                     )
                   );
                 } catch {

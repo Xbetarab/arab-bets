@@ -458,8 +458,7 @@ async function ensureGhostProfile(
     .from("profiles")
     .update({
       created_at: randomDate,
-      followers_count: followersCount,
-      following_count: followingCount,
+      stats: { posts: 0, followers: followersCount, following: followingCount },
     })
     .eq("id", id);
 
@@ -1337,8 +1336,7 @@ export async function humanizeGhostFollowCounts(): Promise<HumanizeResult> {
     const { error } = await supabase
       .from("profiles")
       .update({
-        followers_count: followersCount,
-        following_count: followingCount,
+        stats: { posts: 0, followers: followersCount, following: followingCount },
       })
       .eq("id", profile.id);
 

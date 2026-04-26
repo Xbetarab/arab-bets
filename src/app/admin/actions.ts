@@ -175,8 +175,7 @@ export async function createGhostProfile(
       .from("profiles")
       .update({
         created_at: randomDate,
-        followers_count: Math.floor(Math.random() * 33),
-        following_count: 15 + Math.floor(Math.random() * 39),
+        stats: { posts: 0, followers: Math.floor(Math.random() * 33), following: 15 + Math.floor(Math.random() * 39) },
       })
       .eq("id", id);
   }
@@ -253,9 +252,19 @@ export async function adminSetFollowersCount(
   followersCount: number
 ) {
   const supabase = await assertAdmin();
+
+  // Fetch current stats to preserve other fields
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("stats")
+    .eq("id", profileId)
+    .single();
+
+  const currentStats = (profile?.stats as { posts: number; followers: number; following: number } | null) ?? { posts: 0, followers: 0, following: 0 };
+
   const { error } = await supabase
     .from("profiles")
-    .update({ followers_count: followersCount })
+    .update({ stats: { ...currentStats, followers: followersCount } })
     .eq("id", profileId);
   if (error) {
     console.error("adminSetFollowersCount failed:", error);

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function deletePost(postId: string) {
@@ -66,14 +67,18 @@ export async function createPost(
     confidence: number;
   } | null
 ) {
-  const supabase = await createClient();
+  // Verify user is authenticated via their session
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  // Use admin client for insert + settings read (bypasses RLS issues)
+  const adminClient = createAdminClient();
+
   // Check auto-approve setting
-  const { data: settingsRow } = await supabase
+  const { data: settingsRow } = await adminClient
     .from("app_settings")
     .select("value")
     .eq("key", "moderation")
@@ -99,7 +104,7 @@ export async function createPost(
     };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await adminClient
     .from("posts")
     .insert(insertData)
     .select("id")

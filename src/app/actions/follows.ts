@@ -1,20 +1,23 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function toggleFollow(
   targetUserId: string
 ): Promise<{ following: boolean }> {
-  const supabase = await createClient();
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user) throw new Error("Not authenticated");
   if (user.id === targetUserId) throw new Error("Cannot follow yourself");
 
+  const adminClient = createAdminClient();
+
   // Check if already following
-  const { data: existing } = await supabase
+  const { data: existing } = await adminClient
     .from("follows")
     .select("id")
     .eq("follower_id", user.id)
@@ -23,8 +26,8 @@ export async function toggleFollow(
 
   if (existing) {
     // Unfollow
-    await supabase.from("follows").delete().eq("id", existing.id);
-    await supabase.rpc("decrement_follow_counts", {
+    await adminClient.from("follows").delete().eq("id", existing.id);
+    await adminClient.rpc("decrement_follow_counts", {
       p_follower_id: user.id,
       p_following_id: targetUserId,
     });
@@ -32,11 +35,11 @@ export async function toggleFollow(
     return { following: false };
   } else {
     // Follow
-    await supabase.from("follows").insert({
+    await adminClient.from("follows").insert({
       follower_id: user.id,
       following_id: targetUserId,
     });
-    await supabase.rpc("increment_follow_counts", {
+    await adminClient.rpc("increment_follow_counts", {
       p_follower_id: user.id,
       p_following_id: targetUserId,
     });

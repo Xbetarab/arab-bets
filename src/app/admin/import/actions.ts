@@ -446,6 +446,23 @@ async function ensureGhostProfile(
   }
 
   const id = typeof newId === "string" ? newId : String(newId);
+
+  // Humanize: set random creation date (2024-2025) and follower/following counts
+  const startDate = new Date("2024-01-15T00:00:00Z").getTime();
+  const endDate = new Date("2025-12-20T23:59:59Z").getTime();
+  const randomDate = new Date(startDate + Math.random() * (endDate - startDate)).toISOString();
+  const followersCount = Math.floor(Math.random() * 33); // 0–32
+  const followingCount = 15 + Math.floor(Math.random() * 39); // 15–53
+
+  await supabase
+    .from("profiles")
+    .update({
+      created_at: randomDate,
+      followers_count: followersCount,
+      following_count: followingCount,
+    })
+    .eq("id", id);
+
   profileCache.set(ghost.username, id);
   newProfileCount.count++;
   return id;
@@ -1116,9 +1133,10 @@ export async function uploadGhostAvatarsZip(
       (p: { avatar_url: string | null }) => !p.avatar_url
     );
 
-    // Distribute avatars round-robin to profiles without avatars
-    for (let i = 0; i < profilesWithoutAvatars.length; i++) {
-      const avatarUrl = uploadedUrls[i % uploadedUrls.length];
+    // Distribute avatars 1:1 — each image goes to exactly one profile, no sharing
+    const assignCount = Math.min(uploadedUrls.length, profilesWithoutAvatars.length);
+    for (let i = 0; i < assignCount; i++) {
+      const avatarUrl = uploadedUrls[i];
       const profile = profilesWithoutAvatars[i];
 
       const { error: updateError } = await supabase
@@ -1131,6 +1149,11 @@ export async function uploadGhostAvatarsZip(
       } else {
         assigned++;
       }
+    }
+
+    const remaining = profilesWithoutAvatars.length - assignCount;
+    if (remaining > 0) {
+      errors.push(`${remaining} حساب شبحي بدون صورة — ارفع ${remaining} صورة إضافية لتغطيتهم`);
     }
   }
 
@@ -1208,4 +1231,124 @@ export async function uploadPresetCoversZip(
     assigned: 0,
     errors,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Humanize ghost profiles: random dates + follower/following counts   */
+/* ------------------------------------------------------------------ */
+
+export type HumanizeResult = {
+  profilesUpdated: number;
+  errors: string[];
+};
+
+/**
+ * Randomize created_at dates for ghost profiles to spread across 2024–2025.
+ * Makes the site look established instead of all accounts created in April 2026.
+ */
+export async function humanizeGhostDates(): Promise<HumanizeResult> {
+  const supabase = await assertAdmin();
+  const errors: string[] = [];
+  let profilesUpdated = 0;
+
+  // Get all ghost identities usernames
+  const { data: ghostIdentities } = await supabase
+    .from("ghost_identities")
+    .select("username")
+    .limit(10000);
+
+  if (!ghostIdentities || ghostIdentities.length === 0) {
+    return { profilesUpdated: 0, errors: ["لا توجد حسابات شبحية في المخزون"] };
+  }
+
+  const ghostUsernames = ghostIdentities.map((g: { username: string }) => g.username);
+
+  // Get ghost profiles
+  const { data: ghostProfiles } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .in("username", ghostUsernames)
+    .limit(10000);
+
+  if (!ghostProfiles || ghostProfiles.length === 0) {
+    return { profilesUpdated: 0, errors: ["لا توجد ملفات شخصية للحسابات الشبحية"] };
+  }
+
+  // Distribute dates randomly between Jan 2024 and Dec 2025
+  const startDate = new Date("2024-01-15T00:00:00Z").getTime();
+  const endDate = new Date("2025-12-20T23:59:59Z").getTime();
+
+  for (const profile of ghostProfiles) {
+    const randomTimestamp = startDate + Math.random() * (endDate - startDate);
+    const randomDate = new Date(randomTimestamp).toISOString();
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ created_at: randomDate })
+      .eq("id", profile.id);
+
+    if (error) {
+      errors.push(`فشل تحديث تاريخ "${profile.username}": ${error.message}`);
+    } else {
+      profilesUpdated++;
+    }
+  }
+
+  revalidatePath("/");
+  return { profilesUpdated, errors };
+}
+
+/**
+ * Randomize followers_count (0–32) and following_count (15–53) for ghost profiles.
+ * Makes profiles look like real, active social media accounts.
+ */
+export async function humanizeGhostFollowCounts(): Promise<HumanizeResult> {
+  const supabase = await assertAdmin();
+  const errors: string[] = [];
+  let profilesUpdated = 0;
+
+  // Get all ghost identities usernames
+  const { data: ghostIdentities } = await supabase
+    .from("ghost_identities")
+    .select("username")
+    .limit(10000);
+
+  if (!ghostIdentities || ghostIdentities.length === 0) {
+    return { profilesUpdated: 0, errors: ["لا توجد حسابات شبحية في المخزون"] };
+  }
+
+  const ghostUsernames = ghostIdentities.map((g: { username: string }) => g.username);
+
+  // Get ghost profiles
+  const { data: ghostProfiles } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .in("username", ghostUsernames)
+    .limit(10000);
+
+  if (!ghostProfiles || ghostProfiles.length === 0) {
+    return { profilesUpdated: 0, errors: ["لا توجد ملفات شخصية للحسابات الشبحية"] };
+  }
+
+  for (const profile of ghostProfiles) {
+    const followersCount = Math.floor(Math.random() * 33); // 0–32
+    const followingCount = 15 + Math.floor(Math.random() * 39); // 15–53
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        followers_count: followersCount,
+        following_count: followingCount,
+      })
+      .eq("id", profile.id);
+
+    if (error) {
+      errors.push(`فشل تحديث أعداد "${profile.username}": ${error.message}`);
+    } else {
+      profilesUpdated++;
+    }
+  }
+
+  revalidatePath("/");
+  return { profilesUpdated, errors };
 }

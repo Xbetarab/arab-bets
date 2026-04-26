@@ -1,17 +1,20 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function togglePostLike(postId: string) {
-  const supabase = await createClient();
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  const adminClient = createAdminClient();
+
   // Check if already liked
-  const { data: existing } = await supabase
+  const { data: existing } = await adminClient
     .from("likes")
     .select("id")
     .eq("user_id", user.id)
@@ -21,31 +24,33 @@ export async function togglePostLike(postId: string) {
 
   if (existing) {
     // Unlike — decrement but never below 0
-    await supabase.from("likes").delete().eq("id", existing.id);
-    await supabase.rpc("decrement_post_likes", { p_post_id: postId });
+    await adminClient.from("likes").delete().eq("id", existing.id);
+    await adminClient.rpc("decrement_post_likes", { p_post_id: postId });
     revalidatePath("/");
     return { liked: false };
   } else {
     // Like — increment
-    await supabase.from("likes").insert({
+    await adminClient.from("likes").insert({
       user_id: user.id,
       target_id: postId,
       target_type: "post",
     });
-    await supabase.rpc("increment_post_likes", { p_post_id: postId });
+    await adminClient.rpc("increment_post_likes", { p_post_id: postId });
     revalidatePath("/");
     return { liked: true };
   }
 }
 
 export async function toggleCommentLike(commentId: string) {
-  const supabase = await createClient();
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const { data: existing } = await supabase
+  const adminClient = createAdminClient();
+
+  const { data: existing } = await adminClient
     .from("comment_likes")
     .select("id")
     .eq("user_id", user.id)
@@ -54,17 +59,17 @@ export async function toggleCommentLike(commentId: string) {
 
   if (existing) {
     // Unlike — decrement but never below 0
-    await supabase.from("comment_likes").delete().eq("id", existing.id);
-    await supabase.rpc("decrement_comment_likes", { p_comment_id: commentId });
+    await adminClient.from("comment_likes").delete().eq("id", existing.id);
+    await adminClient.rpc("decrement_comment_likes", { p_comment_id: commentId });
     revalidatePath("/");
     return { liked: false };
   } else {
     // Like — increment
-    await supabase.from("comment_likes").insert({
+    await adminClient.from("comment_likes").insert({
       user_id: user.id,
       comment_id: commentId,
     });
-    await supabase.rpc("increment_comment_likes", { p_comment_id: commentId });
+    await adminClient.rpc("increment_comment_likes", { p_comment_id: commentId });
     revalidatePath("/");
     return { liked: true };
   }

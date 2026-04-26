@@ -10,11 +10,14 @@ import {
   cleanupStaleGhostContent,
   uploadGhostAvatarsZip,
   uploadPresetCoversZip,
+  humanizeGhostDates,
+  humanizeGhostFollowCounts,
   type ImportResult,
   type GhostPoolStats,
   type GhostUploadResult,
   type CleanupResult,
   type ZipUploadResult,
+  type HumanizeResult,
 } from "./actions";
 
 function ResultCard({ result }: { result: ImportResult }) {
@@ -103,6 +106,10 @@ export default function ImportPage() {
   // Cleanup
   const [cleanupResult, setCleanupResult] = useState<CleanupResult | null>(null);
   const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
+
+  // Humanize
+  const [humanizeDatesResult, setHumanizeDatesResult] = useState<HumanizeResult | null>(null);
+  const [humanizeCountsResult, setHumanizeCountsResult] = useState<HumanizeResult | null>(null);
 
   // Ghost avatars ZIP
   const [avatarZipFile, setAvatarZipFile] = useState<File | null>(null);
@@ -1070,6 +1077,93 @@ export default function ImportPage() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Section: Humanize Ghost Profiles */}
+      <div className="bg-zinc-900 border border-emerald-600/30 rounded-xl p-4 space-y-4">
+        <div>
+          <h2 className="text-sm font-medium text-emerald-400">
+            أنسنة الحسابات الشبحية
+          </h2>
+          <p className="text-xs text-zinc-500 mt-1">
+            توزيع تواريخ الانضمام وأعداد المتابعين عشوائياً لجعل الحسابات الشبحية تبدو حقيقية
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={() => {
+              setHumanizeDatesResult(null);
+              startTransition(async () => {
+                const result = await humanizeGhostDates();
+                setHumanizeDatesResult(result);
+              });
+            }}
+            disabled={isPending}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {isPending ? "جاري التحديث..." : "توزيع تواريخ الانضمام (2024-2025)"}
+          </button>
+
+          {humanizeDatesResult && (
+            <div className={`text-sm px-4 py-3 rounded-lg border ${
+              humanizeDatesResult.errors.length === 0
+                ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20"
+                : "bg-yellow-600/10 text-yellow-400 border-yellow-600/20"
+            }`}>
+              <div className="text-xs">
+                تم تحديث <span className="font-bold">{humanizeDatesResult.profilesUpdated}</span> حساب
+              </div>
+              {humanizeDatesResult.errors.length > 0 && (
+                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                  {humanizeDatesResult.errors.map((err, i) => (
+                    <div key={i} className="text-xs text-red-300/80">• {err}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              setHumanizeCountsResult(null);
+              startTransition(async () => {
+                const result = await humanizeGhostFollowCounts();
+                setHumanizeCountsResult(result);
+              });
+            }}
+            disabled={isPending}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
+          >
+            {isPending ? "جاري التحديث..." : "توزيع أعداد المتابعين عشوائياً"}
+          </button>
+
+          {humanizeCountsResult && (
+            <div className={`text-sm px-4 py-3 rounded-lg border ${
+              humanizeCountsResult.errors.length === 0
+                ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20"
+                : "bg-yellow-600/10 text-yellow-400 border-yellow-600/20"
+            }`}>
+              <div className="text-xs">
+                تم تحديث <span className="font-bold">{humanizeCountsResult.profilesUpdated}</span> حساب
+              </div>
+              {humanizeCountsResult.errors.length > 0 && (
+                <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                  {humanizeCountsResult.errors.map((err, i) => (
+                    <div key={i} className="text-xs text-red-300/80">• {err}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="text-xs text-zinc-500 space-y-1">
+          <div>• تواريخ الانضمام: توزع عشوائياً بين يناير 2024 وديسمبر 2025</div>
+          <div>• المتابعون: 0-32 عشوائياً لكل حساب</div>
+          <div>• المتابَعون: 15-53 عشوائياً لكل حساب</div>
+          <div>• الحسابات الجديدة تحصل على هذه القيم تلقائياً عند الإنشاء</div>
+        </div>
       </div>
     </div>
   );

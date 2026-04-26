@@ -33,10 +33,24 @@ export async function rejectPost(postId: string) {
 
 export async function approveComment(commentId: string) {
   const supabase = await assertAdmin();
+
+  // Get the post_id before approving so we can increment comments_count
+  const { data: comment } = await supabase
+    .from("comments")
+    .select("post_id")
+    .eq("id", commentId)
+    .single();
+
   await supabase
     .from("comments")
     .update({ is_approved: true })
     .eq("id", commentId);
+
+  // Increment the post's visible comment count now that it's approved
+  if (comment?.post_id) {
+    await supabase.rpc("increment_post_comments", { p_post_id: comment.post_id });
+  }
+
   revalidatePath("/");
 }
 
@@ -149,6 +163,24 @@ export async function createGhostProfile(
     p_avatar_url: avatarUrl || null,
   });
   if (error) throw error;
+
+  // Humanize: set random creation date (2024-2025) and follower/following counts
+  if (data) {
+    const id = typeof data === "string" ? data : String(data);
+    const startDate = new Date("2024-01-15T00:00:00Z").getTime();
+    const endDate = new Date("2025-12-20T23:59:59Z").getTime();
+    const randomDate = new Date(startDate + Math.random() * (endDate - startDate)).toISOString();
+
+    await supabase
+      .from("profiles")
+      .update({
+        created_at: randomDate,
+        followers_count: Math.floor(Math.random() * 33),
+        following_count: 15 + Math.floor(Math.random() * 39),
+      })
+      .eq("id", id);
+  }
+
   return data;
 }
 

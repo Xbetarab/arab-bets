@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function deleteComment(commentId: string) {
@@ -73,14 +74,18 @@ export async function createComment(
   content: string,
   parentId: string | null
 ) {
-  const supabase = await createClient();
+  // Verify user is authenticated via their session
+  const userClient = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await userClient.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  // Use admin client for insert + settings read (bypasses RLS issues)
+  const adminClient = createAdminClient();
+
   // Check auto-approve setting for comments
-  const { data: settingsRow } = await supabase
+  const { data: settingsRow } = await adminClient
     .from("app_settings")
     .select("value")
     .eq("key", "moderation")
@@ -90,7 +95,7 @@ export async function createComment(
     (settingsRow?.value as { auto_approve_comments?: boolean } | null)
       ?.auto_approve_comments ?? true;
 
-  const { error } = await supabase.from("comments").insert({
+  const { error } = await adminClient.from("comments").insert({
     post_id: postId,
     author_id: user.id,
     content,
@@ -103,8 +108,11 @@ export async function createComment(
     throw error;
   }
 
-  // Increment comments_count on the post (never recounts, preserves admin-inflated values)
-  await supabase.rpc("increment_post_comments", { p_post_id: postId });
+  // Only increment visible comment count if auto-approved
+  // If pending moderation, the count will be incremented when admin approves
+  if (autoApprove) {
+    await adminClient.rpc("increment_post_comments", { p_post_id: postId });
+  }
 
   revalidatePath("/");
   return { success: true };

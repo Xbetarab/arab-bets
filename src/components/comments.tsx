@@ -324,7 +324,7 @@ export default function CommentsSection({
     <div>
       <button
         onClick={handleToggle}
-        className="text-xs text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
+        className="text-xs font-medium text-emerald-400/80 hover:text-emerald-300 bg-zinc-800/60 hover:bg-zinc-700/60 px-3 py-1.5 rounded-lg transition-colors cursor-pointer min-h-[44px]"
       >
         {loading ? "جاري التحميل..." : loaded ? "إخفاء التعليقات" : "عرض التعليقات"}
       </button>

@@ -113,7 +113,7 @@ export default function AnalyticsPage() {
 
   if (!data) return null;
 
-  const { users, clicks, content, realVsGhost, engagement } = data;
+  const { users, clicks, pageViews, content, realVsGhost, engagement } = data;
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -149,9 +149,22 @@ export default function AnalyticsPage() {
         </div>
       </section>
 
-      {/* 2. Link Clicks */}
+      {/* 2. Page Views (site visits) */}
       <section>
-        <SectionHeader title="النقرات" />
+        <SectionHeader title="زيارات الموقع" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatCard label="زيارات اليوم" value={pageViews.today} />
+          <StatCard label="زيارات هذا الأسبوع" value={pageViews.week} />
+          <StatCard label="زيارات هذا الشهر" value={pageViews.month} />
+          <StatCard label="زيارات الشهر الماضي" value={pageViews.last_month} />
+          <StatCard label="زيارات هذه السنة" value={pageViews.year} />
+          <StatCard label="إجمالي الزيارات" value={pageViews.all_time} />
+        </div>
+      </section>
+
+      {/* 3. Link Clicks */}
+      <section>
+        <SectionHeader title="نقرات الروابط" />
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard label="نقرات اليوم" value={clicks.today} />
           <StatCard label="نقرات هذا الأسبوع" value={clicks.week} />

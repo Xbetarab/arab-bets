@@ -112,6 +112,15 @@ export type LinkClickStats = {
   all_time: number;
 };
 
+export type PageViewStats = {
+  today: number;
+  week: number;
+  month: number;
+  last_month: number;
+  year: number;
+  all_time: number;
+};
+
 export type ContentStats = {
   total_posts: number;
   posts_today: number;
@@ -164,6 +173,7 @@ export type EngagementStats = {
 export type AnalyticsData = {
   users: UserRegistrationStats;
   clicks: LinkClickStats;
+  pageViews: PageViewStats;
   content: ContentStats;
   realVsGhost: RealVsGhostStats;
   engagement: EngagementStats;
@@ -198,7 +208,7 @@ async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
     fetchAllAuthUsers(admin),
     admin.from("posts").select("author_id, created_at, likes_count, comments_count"),
     admin.from("comments").select("author_id, created_at"),
-    admin.from("link_clicks").select("created_at"),
+    admin.from("link_clicks").select("created_at, link_type"),
     admin.from("likes").select("id", { count: "exact", head: true }),
     admin.from("comment_likes").select("id", { count: "exact", head: true }),
     admin
@@ -215,7 +225,9 @@ async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
 
   const posts = postsResult.data ?? [];
   const comments = commentsResult.data ?? [];
-  const clicks = clicksResult.data ?? [];
+  const allClicks = clicksResult.data ?? [];
+  const clicks = allClicks.filter((c: { link_type: string | null }) => c.link_type !== "page_view");
+  const pageViews = allClicks.filter((c: { link_type: string | null }) => c.link_type === "page_view");
 
   // ── Build user ID sets (once, shared across all stats) ──
   const ghostIds = new Set(
@@ -244,6 +256,16 @@ async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
     last_month: countInRange(clicks, ranges.last_month.start, ranges.last_month.end),
     year: countInRange(clicks, ranges.year.start, ranges.year.end),
     all_time: clicks.length,
+  };
+
+  // ── 2b. Page View Stats ──
+  const pageViewStats: PageViewStats = {
+    today: countInRange(pageViews, ranges.today.start, ranges.today.end),
+    week: countInRange(pageViews, ranges.week.start, ranges.week.end),
+    month: countInRange(pageViews, ranges.month.start, ranges.month.end),
+    last_month: countInRange(pageViews, ranges.last_month.start, ranges.last_month.end),
+    year: countInRange(pageViews, ranges.year.start, ranges.year.end),
+    all_time: pageViews.length,
   };
 
   // ── 3. Content Stats ──
@@ -346,6 +368,7 @@ async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
   return {
     users: userStats,
     clicks: clickStats,
+    pageViews: pageViewStats,
     content: contentStats,
     realVsGhost: realVsGhostStats,
     engagement: {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import PageViewTracker from "@/components/page-view-tracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,7 +48,10 @@ export default function RootLayout({
       dir="rtl"
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-screen bg-zinc-950 text-white overscroll-none">{children}</body>
+      <body className="min-h-screen bg-zinc-950 text-white overscroll-none">
+        <PageViewTracker />
+        {children}
+      </body>
     </html>
   );
 }

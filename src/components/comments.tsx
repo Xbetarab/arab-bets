@@ -346,8 +346,8 @@ export default function CommentsSection({
             ))
           )}
 
-          {/* New comment form */}
-          {userId && (
+          {/* New comment form or sign-up prompt */}
+          {userId ? (
             <div className="pt-3 border-t border-zinc-800/50 space-y-2">
               {replyTo && (
                 <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -380,6 +380,28 @@ export default function CommentsSection({
                 >
                   {submitting ? "..." : "إرسال"}
                 </button>
+              </div>
+            </div>
+          ) : (
+            <div className="pt-3 border-t border-zinc-800/50">
+              <div className="bg-zinc-800/60 border border-zinc-700/50 rounded-xl p-4 text-center space-y-3">
+                <p className="text-zinc-300 text-sm">
+                  عندك رأي؟ سجل دخولك أو أنشئ حساب وشاركنا!
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <a
+                    href="/auth/signup"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors min-h-[44px] flex items-center"
+                  >
+                    إنشاء حساب
+                  </a>
+                  <a
+                    href="/auth/login"
+                    className="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors min-h-[44px] flex items-center"
+                  >
+                    تسجيل الدخول
+                  </a>
+                </div>
               </div>
             </div>
           )}

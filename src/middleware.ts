@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -41,7 +40,8 @@ export async function middleware(request: NextRequest) {
 
   const isPublic =
     publicPaths.includes(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith("/post/"); // individual post pages
+    request.nextUrl.pathname.startsWith("/post/") ||
+    request.nextUrl.pathname.startsWith("/1xbet");
 
   // PROTECTED routes — redirect to login if not authenticated
   if (!user && !isPublic) {
@@ -55,6 +55,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

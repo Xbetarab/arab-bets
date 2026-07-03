@@ -353,6 +353,30 @@ const faqJsonLd = {
   })),
 };
 
+const reviewJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Review',
+  itemReviewed: {
+    '@type': 'Organization',
+    name: '1xBet',
+    url: 'https://1xbet.com',
+  },
+  author: {
+    '@type': 'Organization',
+    name: 'ArabTips',
+    url: 'https://arabtips.com',
+  },
+  reviewRating: {
+    '@type': 'Rating',
+    ratingValue: '4.6',
+    bestRating: '5',
+    worstRating: '1',
+  },
+  datePublished: '2026-07-02',
+  dateModified: '2026-07-03',
+  inLanguage: 'ar',
+};
+
 /* ---------------------------------- الصفحة ---------------------------------- */
 
 export default function Page() {
@@ -367,6 +391,10 @@ export default function Page() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewJsonLd) }}
       />
       <style dangerouslySetInnerHTML={{ __html: tokens }} />
 

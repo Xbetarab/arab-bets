@@ -4,8 +4,9 @@
  * 1xBet العراق — صفحة تحميل تطبيق APK  (/1xbet/tahmil-apk)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
  *
- * ⚠️ قبل النشر: عبّئ FILE_SIZE و APP_VERSION بالقيم الحقيقية —
- * تركتهما placeholder عمداً بدل اختراع أرقام لا أملك مصدراً لها.
+ * ملاحظة: تجنّبنا عرض رقم إصدار أو حجم ملف ثابت لأنهما يتغيّران مع كل
+ * تحديث من 1xBet — أي رقم ثابت يصبح خاطئاً وقديماً. نستخدم "آخر إصدار"
+ * و"يُحدَّث تلقائياً" بدلاً منهما: دائم الصحة، بلا صيانة يدوية.
  */
 
 import { useState } from 'react';
@@ -17,10 +18,6 @@ const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variab
 
 const AFF_LINK = 'https://dub.sh/fP9V2WH';
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
-
-/* ⚠️ placeholders — عبّئ القيم الحقيقية قبل النشر */
-const FILE_SIZE = '—— MB';
-const APP_VERSION = '—.—.—';
 
 const tokens = `
   :root {
@@ -109,14 +106,10 @@ function AppCard() {
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-2 rounded-xl bg-[var(--bg-deep)]/50 p-3 text-center">
-          <div>
-            <p className="text-xs text-[var(--faint)]">الحجم</p>
-            <p className="mt-0.5 text-sm font-bold text-[var(--ink)]">{FILE_SIZE}</p>
-          </div>
-          <div className="border-x border-[var(--line)]">
+        <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--bg-deep)]/50 p-3 text-center">
+          <div className="border-l border-[var(--line)]">
             <p className="text-xs text-[var(--faint)]">الإصدار</p>
-            <p className="mt-0.5 text-sm font-bold text-[var(--ink)]">{APP_VERSION}</p>
+            <p className="mt-0.5 text-sm font-bold text-[var(--lime-bright)]">آخر إصدار</p>
           </div>
           <div>
             <p className="text-xs text-[var(--faint)]">أندرويد</p>
@@ -125,7 +118,10 @@ function AppCard() {
         </div>
 
         <PrimaryCTA className="mt-5 w-full">تحميل APK ←</PrimaryCTA>
-        <p className="mt-3 text-center text-xs text-[var(--faint)]">ملف APK مباشر · لا يتطلب Google Play</p>
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-[var(--faint)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--lime)]" />
+          يُحدَّث تلقائياً · لا يتطلب Google Play
+        </p>
       </div>
     </motion.div>
   );
@@ -169,7 +165,7 @@ function InstallTimeline() {
 const faqs = [
   { q: 'شلون أثبت 1xbet APK بجهازي؟', a: 'حمّل الملف من الزر أعلاه، فعّل "مصادر غير معروفة" من إعدادات الأمان، افتح الملف واضغط تثبيت. العملية كاملة تأخذ أقل من دقيقتين.' },
   { q: 'التطبيق آمن؟ ليش مو موجود بكوكل بلي؟', a: 'متجر Google Play لا يقبل تطبيقات المراهنات في المنطقة — هذا ينطبق على كل شركات المراهنات، مو خاص بـ1xBet. الملف نفسه من مصدر 1xBet الرسمي، وهذا هو الأسلوب المعتمد عالمياً لهذا النوع من التطبيقات.' },
-  { q: 'شكد حجم التطبيق ويحتاج مساحة وايد؟', a: `حجم الملف ${FILE_SIZE}. تأكد إن عندك مساحة فارغة كافية بجهازك قبل التحميل.` },
+  { q: 'شكد حجم التطبيق ويحتاج مساحة وايد؟', a: 'التطبيق خفيف نسبياً وأخف من تصفح الموقع عبر المتصفح باستمرار. تأكد إن عندك مساحة فارغة كافية بجهازك قبل التحميل — أغلب الأجهزة الحديثة تستوعبه بسهولة.' },
   { q: 'يشتغل على جميع أجهزة الأندرويد؟', a: 'يعمل على أندرويد 6.0 فما فوق — يعني أغلب الأجهزة المُصنَّعة خلال آخر 8 سنوات. إذا جهازك أقدم من هذا، يمكنك استخدام النسخة عبر المتصفح بدلاً من التطبيق.' },
 ];
 
@@ -272,7 +268,7 @@ export default function Page() {
                 transition={{ duration: 0.3, delay: 0.22, ease: EASE }}
                 className="mt-9">
                 <PrimaryCTA big>تحميل 1xBet APK الآن ←</PrimaryCTA>
-                <p className="mt-3 text-sm text-[var(--faint)]">ملف مباشر من 1xBet · {FILE_SIZE}</p>
+                <p className="mt-3 text-sm text-[var(--faint)]">ملف مباشر من 1xBet · آخر إصدار محدّث</p>
               </motion.div>
             </div>
 
@@ -328,7 +324,7 @@ export default function Page() {
         <Reveal>
           <h2 className="font-[var(--font-display)] text-3xl font-bold tracking-[-0.02em] md:text-4xl">جاهز تحمّل التطبيق؟</h2>
           <div className="mt-8 flex justify-center"><PrimaryCTA big>تحميل 1xBet APK ←</PrimaryCTA></div>
-          <p className="mt-4 text-sm text-[var(--faint)]">{FILE_SIZE} · إصدار {APP_VERSION} · أندرويد 6.0+</p>
+          <p className="mt-4 text-sm text-[var(--faint)]">آخر إصدار · يُحدَّث تلقائياً · أندرويد 6.0+</p>
         </Reveal>
       </section>
 

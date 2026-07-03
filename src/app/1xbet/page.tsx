@@ -341,6 +341,18 @@ function FAQ() {
   );
 }
 
+/* ---------------------------- البيانات المنظمة (Schema) ---------------------------- */
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
 /* ---------------------------------- الصفحة ---------------------------------- */
 
 export default function Page() {
@@ -352,6 +364,10 @@ export default function Page() {
       lang="ar"
       className={`${display.variable} ${body.variable} min-h-screen bg-[var(--bg)] font-[var(--font-body)] text-[var(--ink)] antialiased`}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <style dangerouslySetInnerHTML={{ __html: tokens }} />
 
       {/* ================================ HERO ================================ */}

@@ -1,5 +1,7 @@
 'use client';
 
+import RelatedLinks from '../RelatedLinks';
+
 /**
  * 1xBet العراق — صفحة طرق الإيداع  (/1xbet/idaa)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -391,6 +393,8 @@ export default function Page() {
           <p className="mt-4 text-sm text-[var(--faint)]">زين كاش وآسيا سيل: إيداع فوري خلال ثوانٍ</p>
         </Reveal>
       </section>
+
+      <RelatedLinks current="/1xbet/idaa" />
 
       {/* =============================== الفوتر =============================== */}
       <footer className="border-t border-[var(--line)] bg-[var(--bg-deep)] px-6 py-10">

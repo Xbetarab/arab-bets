@@ -1,5 +1,7 @@
 'use client';
 
+import RelatedLinks from '../RelatedLinks';
+
 /**
  * 1xBet العراق — صفحة تحميل تطبيق APK  (/1xbet/tahmil-apk)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -327,6 +329,8 @@ export default function Page() {
           <p className="mt-4 text-sm text-[var(--faint)]">آخر إصدار · يُحدَّث تلقائياً · أندرويد 6.0+</p>
         </Reveal>
       </section>
+
+      <RelatedLinks current="/1xbet/tahmil-apk" />
 
       {/* =============================== الفوتر =============================== */}
       <footer className="border-t border-[var(--line)] bg-[var(--bg-deep)] px-6 py-10">

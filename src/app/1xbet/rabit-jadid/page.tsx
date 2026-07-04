@@ -17,6 +17,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import RelatedLinks from '../RelatedLinks';
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -320,6 +321,8 @@ export default function Page() {
           <p className="mt-4 text-sm text-[var(--faint)]">احفظ الصفحة في المفضلة — ارجع لها متى ما توقف الرابط</p>
         </Reveal>
       </section>
+
+      <RelatedLinks current="/1xbet/rabit-jadid" />
 
       {/* =============================== الفوتر =============================== */}
       <footer className="border-t border-[var(--line)] bg-[var(--bg-deep)] px-6 py-10">

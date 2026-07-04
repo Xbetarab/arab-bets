@@ -13,6 +13,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import RelatedLinks from './RelatedLinks';
 
 const display = Changa({ subsets: ['arabic'], weight: ['600', '700', '800'], variable: '--font-display' });
 const body = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -635,14 +636,22 @@ export default function Page() {
             </h2>
             <p className="mt-4 leading-[1.6] text-[var(--muted)]">
               بعض مزودي الإنترنت في العراق يحجبون الرابط الرئيسي من فترة لأخرى — المشكلة ليست في حسابك. نحن نحدّث{' '}
-              <strong className="text-[var(--ink)]">رابط 1xbet الشغال</strong> في هذه الصفحة باستمرار، والحل الجذري
+              <a href="/1xbet/rabit-jadid" className="font-bold text-[var(--sky)] underline decoration-[oklch(72%_0.12_242/0.4)] underline-offset-4 hover:text-[var(--lime-bright)]">رابط 1xbet الشغال</a> في هذه الصفحة باستمرار، والحل الجذري
               هو <strong className="text-[var(--ink)]">تنزيل تطبيق 1xbet</strong> بصيغة APK: يتجاوز الحجب، وحسابك
               واحد في كل مكان.
             </p>
           </Reveal>
           <Reveal delay={0.12} className="mt-8 flex flex-wrap justify-center gap-4">
             <CTA>الرابط الشغال الآن ←</CTA>
-            <CTA variant="ghost">تحميل APK — آخر إصدار 2026</CTA>
+            <motion.a
+              href="/1xbet/tahmil-apk"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
+              className="focus-ring inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--line)] px-7 py-3.5 text-lg font-bold text-[var(--ink)] transition-shadow duration-200 hover:border-[oklch(96%_0.01_250/0.25)] hover:bg-[oklch(96%_0.01_250/0.04)]"
+            >
+              تحميل APK — آخر إصدار 2026
+            </motion.a>
           </Reveal>
         </div>
       </section>
@@ -686,6 +695,8 @@ export default function Page() {
           </div>
         </Reveal>
       </section>
+
+      <RelatedLinks current="/1xbet" />
 
       {/* =============================== الفوتر =============================== */}
       <footer className="border-t border-[var(--line)] bg-[var(--bg-deep)] px-6 py-10">

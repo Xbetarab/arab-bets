@@ -11,14 +11,14 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from './RelatedLinks';
 
 const display = Changa({ subsets: ['arabic'], weight: ['600', '700', '800'], variable: '--font-display' });
 const body = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
 
-const AFF_LINK = 'https://dub.sh/fP9V2WH';
+const AFF_LINK = '/go/1xbet';
 const PROMO_CODE = 'X9GO';
 
 /* ------------------------------ توكنز التصميم ------------------------------ */
@@ -120,7 +120,7 @@ function CTA({
     <motion.a
       href={AFF_LINK}
       target="_blank"
-      rel="sponsored noopener"
+      rel="sponsored nofollow noopener"
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.16, ease: 'easeOut' }}
@@ -322,18 +322,15 @@ function FAQ() {
                   +
                 </motion.span>
               </button>
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: EASE }}
-                  >
-                    <p className="px-5 pb-5 leading-relaxed text-[var(--muted)]">{item.a}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.div
+                initial={false}
+                animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                style={{ overflow: 'hidden' }}
+                aria-hidden={!isOpen}
+              >
+                <p className="px-5 pb-5 leading-relaxed text-[var(--muted)]">{item.a}</p>
+              </motion.div>
             </div>
           </Reveal>
         );

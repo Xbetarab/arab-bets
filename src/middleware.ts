@@ -41,7 +41,8 @@ export async function middleware(request: NextRequest) {
   const isPublic =
     publicPaths.includes(request.nextUrl.pathname) ||
     request.nextUrl.pathname.startsWith("/post/") ||
-    request.nextUrl.pathname.startsWith("/1xbet");
+    request.nextUrl.pathname.startsWith("/1xbet") ||
+    request.nextUrl.pathname.startsWith("/go/");
 
   // PROTECTED routes — redirect to login if not authenticated
   if (!user && !isPublic) {

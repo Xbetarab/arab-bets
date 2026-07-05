@@ -10,6 +10,7 @@ const links = [
   { href: '/1xbet/rabit-jadid', title: 'رابط 1xbet الشغّال المحدّث', desc: 'الموقع محجوب عندك؟ الرابط البديل هنا دائماً' },
   { href: '/1xbet/tahmil-apk', title: 'تحميل تطبيق 1xBet APK', desc: 'آخر إصدار للأندرويد — يتجاوز الحجب نهائياً' },
   { href: '/1xbet/idaa', title: 'طرق الإيداع بزين كاش وآسيا سيل', desc: 'خطوات كل طريقة دفع عراقية بالتفصيل' },
+  { href: '/1xbet/promo-code', title: 'كود خصم 1xBet الترويجي', desc: 'الرمز الحصري لمضاعفة المكافأة — أدخله أثناء التسجيل' },
 ];
 
 export default function RelatedLinks({ current }: { current: string }) {

@@ -12,6 +12,7 @@ const links = [
   { href: '/1xbet/idaa', title: 'طرق الإيداع بزين كاش وآسيا سيل', desc: 'خطوات كل طريقة دفع عراقية بالتفصيل' },
   { href: '/1xbet/promo-code', title: 'كود خصم 1xBet الترويجي', desc: 'الرمز الحصري لمضاعفة المكافأة — أدخله أثناء التسجيل' },
   { href: '/1xbet/tasjil', title: 'التسجيل في 1xBet خطوة بخطوة', desc: 'أربع طرق للتسجيل — اختر الأسرع لك' },
+  { href: '/1xbet/bonus', title: 'مكافآت 1xBet بالتفصيل', desc: 'شرط الرهان بمثال محسوب حقيقي وأخطاء شائعة' },
 ];
 
 export default function RelatedLinks({ current }: { current: string }) {

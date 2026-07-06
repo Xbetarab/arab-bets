@@ -261,14 +261,15 @@ function FAQ() {
                 <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2, ease: 'easeOut' }}
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--raised)] text-lg font-bold text-[var(--ink)]" aria-hidden>+</motion.span>
               </button>
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.28, ease: EASE }}>
-                    <p className="px-5 pb-5 leading-[1.6] text-[var(--muted)]">{item.a}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.div
+                initial={false}
+                animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+                transition={{ duration: 0.28, ease: EASE }}
+                style={{ overflow: 'hidden' }}
+                aria-hidden={!isOpen}
+              >
+                <p className="px-5 pb-5 leading-[1.6] text-[var(--muted)]">{item.a}</p>
+              </motion.div>
             </div>
           </Reveal>
         );
@@ -399,6 +400,9 @@ export default function Page() {
           <p className="max-w-3xl text-sm leading-[1.6] text-[var(--faint)]">
             ⚠️ إخلاء مسؤولية: موقع معلوماتي مستقل لأغراض المراجعة، لا يمثل العلامة التجارية 1xBet رسمياً. المراهنات لمن هم 18 عاماً فأكثر. المراهنة تنطوي على مخاطر مالية — لا تراهن بأموال لا تتحمل خسارتها. للعب المسؤول: حدد ميزانيتك والتزم بها.
           </p>
+          <a href="/about" className="text-xs text-[var(--faint)] underline underline-offset-4 hover:text-[var(--muted)]">
+            من نحن وسياسة الإفصاح
+          </a>
         </div>
       </footer>
     </main>

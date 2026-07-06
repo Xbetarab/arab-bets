@@ -704,6 +704,9 @@ export default function Page() {
             المراهنات مخصصة لمن هم بعمر 18 عاماً فأكثر. المراهنة تنطوي على مخاطر مالية — لا تراهن بأموال لا تتحمل
             خسارتها، وتأكد من توافق استخدامك مع القوانين المحلية. للعب المسؤول: حدد ميزانيتك مسبقاً والتزم بها.
           </p>
+          <a href="/about" className="text-xs text-[var(--faint)] underline underline-offset-4 hover:text-[var(--muted)]">
+            من نحن وسياسة الإفصاح
+          </a>
         </div>
       </footer>
     </main>

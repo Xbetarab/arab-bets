@@ -153,6 +153,64 @@ function FAQ() {
   );
 }
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "شنو هو Pariland؟ وهل هو آمن؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pariland منصة مراهنات رياضية وكازينو أونلاين مرخّصة، تعمل بنفس تقنية المنصات العالمية المعروفة وتقبل اللاعبين من الدول العربية بما فيها العراق، مع دعم كامل للغة العربية والدينار العراقي."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "وين أدخل الرمز الترويجي؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "أدخل الرمز الترويجي X9GO في الخانة المخصصة أثناء التسجيل — يظهر مرة واحدة فقط عند إنشاء الحساب، ولا يمكن إضافته بعد ذلك."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "شلون أسجّل وأبدأ؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "التسجيل يستغرق أقل من دقيقتين — اختر إحدى طرق التسجيل الأربع، أدخل بياناتك والرمز الترويجي، واختر العملة الدينار العراقي."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "شنو طرق الإيداع والسحب المتاحة للعراق؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "تدعم المنصة طرق الدفع الشائعة في العراق: زين كاش، آسيا سيل، FIB وغيرها — راجع صفحتي الإيداع والسحب للحدود والشروط الحقيقية لكل طريقة."
+      }
+    }
+  ]
+};
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "الرئيسية",
+      "item": "https://arabtips.com"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Pariland العراق",
+      "item": "https://arabtips.com/pariland"
+    }
+  ]
+};
+
 /* ---------------------------------- الصفحة ---------------------------------- */
 
 export default function Page() {
@@ -162,6 +220,8 @@ export default function Page() {
     <main dir="rtl" lang="ar"
       className={`${display.variable} ${body.variable} min-h-screen bg-[var(--bg)] font-[var(--font-body)] text-[var(--ink)] antialiased`}>
       <style dangerouslySetInnerHTML={{ __html: tokens }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       {/* ================================ HERO ================================ */}
       <section className="relative overflow-hidden">
@@ -291,7 +351,7 @@ export default function Page() {
           <p className="max-w-3xl text-sm leading-[1.6] text-[var(--faint)]">
             ⚠️ إخلاء مسؤولية: موقع معلوماتي مستقل لأغراض المراجعة، لا يمثل العلامة التجارية Pariland رسمياً. المراهنات لمن هم 18 عاماً فأكثر. المراهنة تنطوي على مخاطر مالية — لا تراهن بأموال لا تتحمل خسارتها. للعب المسؤول: حدد ميزانيتك والتزم بها.
           </p>
-          <a href="/about" className="text-xs text-[var(--faint)] underline underline-offset-4 hover:text-[var(--muted)]">
+          <a href="/about" className="inline-flex min-h-[44px] items-center text-xs text-[var(--faint)] underline underline-offset-4 hover:text-[var(--muted)]">
             من نحن وسياسة الإفصاح
           </a>
         </div>

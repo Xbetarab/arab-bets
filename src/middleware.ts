@@ -44,6 +44,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/1xbet") ||
     request.nextUrl.pathname.startsWith("/pariland") ||
     request.nextUrl.pathname.startsWith("/go/") ||
+    request.nextUrl.pathname.startsWith("/eg") ||
     request.nextUrl.pathname.startsWith("/about");
 
   // PROTECTED routes — redirect to login if not authenticated

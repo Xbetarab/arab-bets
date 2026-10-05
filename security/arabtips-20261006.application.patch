@@ -1,0 +1,3113 @@
+diff --git a/eslint.config.mjs b/eslint.config.mjs
+index 6ab8767..459c52b 100644
+--- a/eslint.config.mjs
++++ b/eslint.config.mjs
+@@ -5,6 +5,10 @@ import nextTs from "eslint-config-next/typescript";
+ const eslintConfig = defineConfig([
+   ...nextVitals,
+   ...nextTs,
++  {
++    files: ["tests/**/*.test.cjs"],
++    rules: { "@typescript-eslint/no-require-imports": "off" },
++  },
+   {
+     rules: {
+       // Allow setState in effects for debounce / subscription patterns
+diff --git a/next.config.ts b/next.config.ts
+index 5852042..15eeee4 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -2,6 +2,23 @@ import type { NextConfig } from "next";
+ 
+ const nextConfig: NextConfig = {
+   // removed: not using Docker for deployment, this was breaking Server Actions with next start — see incident 2026-07-04
++  poweredByHeader: false,
++  async headers() {
++    return [{
++      source: "/:path*",
++      headers: [
++        { key: "X-Content-Type-Options", value: "nosniff" },
++        { key: "X-Frame-Options", value: "DENY" },
++        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
++        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
++        // Restrict embedding and unsafe document features without breaking Next's inline scripts.
++        { key: "Content-Security-Policy", value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" },
++        ...(process.env.NODE_ENV === "production"
++          ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]
++          : []),
++      ],
++    }];
++  },
+   images: {
+     remotePatterns: [
+       {
+diff --git a/package-lock.json b/package-lock.json
+index bb15c4b..dbf2017 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -13,9 +13,10 @@
+         "date-fns": "^4.1.0",
+         "framer-motion": "^12.42.2",
+         "jszip": "^3.10.1",
+-        "next": "16.2.2",
++        "next": "16.3.8",
+         "react": "19.2.4",
+-        "react-dom": "19.2.4"
++        "react-dom": "19.2.4",
++        "server-only": "0.0.1"
+       },
+       "devDependencies": {
+         "@tailwindcss/postcss": "^4",
+@@ -23,7 +24,7 @@
+         "@types/react": "^19",
+         "@types/react-dom": "^19",
+         "eslint": "^9",
+-        "eslint-config-next": "16.2.2",
++        "eslint-config-next": "16.3.8",
+         "tailwindcss": "^4",
+         "typescript": "^5"
+       }
+@@ -42,13 +43,13 @@
+       }
+     },
+     "node_modules/@babel/code-frame": {
+-      "version": "7.29.0",
+-      "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.0.tgz",
+-      "integrity": "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
++      "integrity": "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/helper-validator-identifier": "^7.28.5",
++        "@babel/helper-validator-identifier": "^7.29.7",
+         "js-tokens": "^4.0.0",
+         "picocolors": "^1.1.1"
+       },
+@@ -57,9 +58,9 @@
+       }
+     },
+     "node_modules/@babel/compat-data": {
+-      "version": "7.29.0",
+-      "resolved": "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.29.0.tgz",
+-      "integrity": "sha512-T1NCJqT/j9+cn8fvkt7jtwbLBfLC/1y1c7NtCeXFRgzGTsafi68MRv8yzkYSapBnFA6L3U2VSc02ciDzoAJhJg==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.29.7.tgz",
++      "integrity": "sha512-locTkQyKvwIEgBzVrn8693ebc97F2U8ZHjbXwDXJ5Fn2TCpNwTlKcaKLkdHop5c/icOFE7qt7Q9JC5hnKNa6Gg==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -67,21 +68,21 @@
+       }
+     },
+     "node_modules/@babel/core": {
+-      "version": "7.29.0",
+-      "resolved": "https://registry.npmjs.org/@babel/core/-/core-7.29.0.tgz",
+-      "integrity": "sha512-CGOfOJqWjg2qW/Mb6zNsDm+u5vFQ8DxXfbM09z69p5Z6+mE1ikP2jUXw+j42Pf1XTYED2Rni5f95npYeuwMDQA==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/core/-/core-7.29.7.tgz",
++      "integrity": "sha512-RgHBCvtjbOK2gXSNBNIkNoEc9qoVEtau3hj8gEqKQuL3HZAibKarWFEI3Lfm6EYKkLalOh8eSrj9b+ch9H/VBA==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/code-frame": "^7.29.0",
+-        "@babel/generator": "^7.29.0",
+-        "@babel/helper-compilation-targets": "^7.28.6",
+-        "@babel/helper-module-transforms": "^7.28.6",
+-        "@babel/helpers": "^7.28.6",
+-        "@babel/parser": "^7.29.0",
+-        "@babel/template": "^7.28.6",
+-        "@babel/traverse": "^7.29.0",
+-        "@babel/types": "^7.29.0",
++        "@babel/code-frame": "^7.29.7",
++        "@babel/generator": "^7.29.7",
++        "@babel/helper-compilation-targets": "^7.29.7",
++        "@babel/helper-module-transforms": "^7.29.7",
++        "@babel/helpers": "^7.29.7",
++        "@babel/parser": "^7.29.7",
++        "@babel/template": "^7.29.7",
++        "@babel/traverse": "^7.29.7",
++        "@babel/types": "^7.29.7",
+         "@jridgewell/remapping": "^2.3.5",
+         "convert-source-map": "^2.0.0",
+         "debug": "^4.1.0",
+@@ -98,14 +99,14 @@
+       }
+     },
+     "node_modules/@babel/generator": {
+-      "version": "7.29.1",
+-      "resolved": "https://registry.npmjs.org/@babel/generator/-/generator-7.29.1.tgz",
+-      "integrity": "sha512-qsaF+9Qcm2Qv8SRIMMscAvG4O3lJ0F1GuMo5HR/Bp02LopNgnZBC/EkbevHFeGs4ls/oPz9v+Bsmzbkbe+0dUw==",
++      "version": "7.29.8",
++      "resolved": "https://registry.npmjs.org/@babel/generator/-/generator-7.29.8.tgz",
++      "integrity": "sha512-gZbepsdh3WDtgZKWL+vTPh71LSBrm/Y4/QDZBVCcYfmeTEEuoOYwlSy+G1StfJg+/Zy550u/3TATbm7qDbbMtg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/parser": "^7.29.0",
+-        "@babel/types": "^7.29.0",
++        "@babel/parser": "^7.29.8",
++        "@babel/types": "^7.29.8",
+         "@jridgewell/gen-mapping": "^0.3.12",
+         "@jridgewell/trace-mapping": "^0.3.28",
+         "jsesc": "^3.0.2"
+@@ -115,14 +116,14 @@
+       }
+     },
+     "node_modules/@babel/helper-compilation-targets": {
+-      "version": "7.28.6",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-compilation-targets/-/helper-compilation-targets-7.28.6.tgz",
+-      "integrity": "sha512-JYtls3hqi15fcx5GaSNL7SCTJ2MNmjrkHXg4FSpOA/grxK8KwyZ5bubHsCq8FXCkua6xhuaaBit+3b7+VZRfcA==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-compilation-targets/-/helper-compilation-targets-7.29.7.tgz",
++      "integrity": "sha512-wem6WaBj4NaVYVdNhLPPVacES6ZJ+KBBfSkTMD3YZxbP3rm3Di85tJU5ljaUNhaOynt+Aj0xruhYuzQBt8n71g==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/compat-data": "^7.28.6",
+-        "@babel/helper-validator-option": "^7.27.1",
++        "@babel/compat-data": "^7.29.7",
++        "@babel/helper-validator-option": "^7.29.7",
+         "browserslist": "^4.24.0",
+         "lru-cache": "^5.1.1",
+         "semver": "^6.3.1"
+@@ -132,9 +133,9 @@
+       }
+     },
+     "node_modules/@babel/helper-globals": {
+-      "version": "7.28.0",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-globals/-/helper-globals-7.28.0.tgz",
+-      "integrity": "sha512-+W6cISkXFa1jXsDEdYA8HeevQT/FULhxzR99pxphltZcVaugps53THCeiWA8SguxxpSp3gKPiuYfSWopkLQ4hw==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-globals/-/helper-globals-7.29.7.tgz",
++      "integrity": "sha512-3nQVUAtvkKH9zahfWgw96Jc/uFOmjACE1kQz82E2lqWmHBgjzbNlsC22nuQTfahmWeQtTq5nQ/4Nnd2A1wj4zA==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -142,29 +143,29 @@
+       }
+     },
+     "node_modules/@babel/helper-module-imports": {
+-      "version": "7.28.6",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-module-imports/-/helper-module-imports-7.28.6.tgz",
+-      "integrity": "sha512-l5XkZK7r7wa9LucGw9LwZyyCUscb4x37JWTPz7swwFE/0FMQAGpiWUZn8u9DzkSBWEcK25jmvubfpw2dnAMdbw==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-module-imports/-/helper-module-imports-7.29.7.tgz",
++      "integrity": "sha512-ejHwrQQYcm9xnTivShn2IDOlIzInN34AXskvq9QicvCtEzq1Vzclu/tKF8Jq1Cg8JG2GL6/EmjgsCT7lXepE3g==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/traverse": "^7.28.6",
+-        "@babel/types": "^7.28.6"
++        "@babel/traverse": "^7.29.7",
++        "@babel/types": "^7.29.7"
+       },
+       "engines": {
+         "node": ">=6.9.0"
+       }
+     },
+     "node_modules/@babel/helper-module-transforms": {
+-      "version": "7.28.6",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-module-transforms/-/helper-module-transforms-7.28.6.tgz",
+-      "integrity": "sha512-67oXFAYr2cDLDVGLXTEABjdBJZ6drElUSI7WKp70NrpyISso3plG9SAGEF6y7zbha/wOzUByWWTJvEDVNIUGcA==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-module-transforms/-/helper-module-transforms-7.29.7.tgz",
++      "integrity": "sha512-UPUVSyXbOh627KiCIGQSgwWzGeBKLkaJ9PJEdrngIwMSzxLR4jS4+f1f1jb7VzBbg8nFLaYotvVPFCTqdrmTAg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/helper-module-imports": "^7.28.6",
+-        "@babel/helper-validator-identifier": "^7.28.5",
+-        "@babel/traverse": "^7.28.6"
++        "@babel/helper-module-imports": "^7.29.7",
++        "@babel/helper-validator-identifier": "^7.29.7",
++        "@babel/traverse": "^7.29.7"
+       },
+       "engines": {
+         "node": ">=6.9.0"
+@@ -174,9 +175,9 @@
+       }
+     },
+     "node_modules/@babel/helper-string-parser": {
+-      "version": "7.27.1",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.27.1.tgz",
+-      "integrity": "sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.7.tgz",
++      "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -184,9 +185,9 @@
+       }
+     },
+     "node_modules/@babel/helper-validator-identifier": {
+-      "version": "7.28.5",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.28.5.tgz",
+-      "integrity": "sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
++      "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -194,9 +195,9 @@
+       }
+     },
+     "node_modules/@babel/helper-validator-option": {
+-      "version": "7.27.1",
+-      "resolved": "https://registry.npmjs.org/@babel/helper-validator-option/-/helper-validator-option-7.27.1.tgz",
+-      "integrity": "sha512-YvjJow9FxbhFFKDSuFnVCe2WxXk1zWc22fFePVNEaWJEu8IrZVlda6N0uHwzZrUM1il7NC9Mlp4MaJYbYd9JSg==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-validator-option/-/helper-validator-option-7.29.7.tgz",
++      "integrity": "sha512-N9ZErrD+yW5geCDtBqnOoxmR8+tNKiGuxKlDpuJxfsqpa2dFcexaziGAE/qoHLiDDreVNMupxGmSoNlyvsA3gw==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+@@ -204,27 +205,27 @@
+       }
+     },
+     "node_modules/@babel/helpers": {
+-      "version": "7.29.2",
+-      "resolved": "https://registry.npmjs.org/@babel/helpers/-/helpers-7.29.2.tgz",
+-      "integrity": "sha512-HoGuUs4sCZNezVEKdVcwqmZN8GoHirLUcLaYVNBK2J0DadGtdcqgr3BCbvH8+XUo4NGjNl3VOtSjEKNzqfFgKw==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helpers/-/helpers-7.29.7.tgz",
++      "integrity": "sha512-1k2lAGRMfHTcwuNYcCNUmaUffmQv8KWMfh2iJUUeRlwlwH4FdNG7mfPI10NPfLHJFThE4Tyr4mv7kTNZOiPuBg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/template": "^7.28.6",
+-        "@babel/types": "^7.29.0"
++        "@babel/template": "^7.29.7",
++        "@babel/types": "^7.29.7"
+       },
+       "engines": {
+         "node": ">=6.9.0"
+       }
+     },
+     "node_modules/@babel/parser": {
+-      "version": "7.29.2",
+-      "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.2.tgz",
+-      "integrity": "sha512-4GgRzy/+fsBa72/RZVJmGKPmZu9Byn8o4MoLpmNe1m8ZfYnz5emHLQz3U4gLud6Zwl0RZIcgiLD7Uq7ySFuDLA==",
++      "version": "7.29.9",
++      "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.29.9.tgz",
++      "integrity": "sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/types": "^7.29.0"
++        "@babel/types": "^7.29.8"
+       },
+       "bin": {
+         "parser": "bin/babel-parser.js"
+@@ -234,33 +235,33 @@
+       }
+     },
+     "node_modules/@babel/template": {
+-      "version": "7.28.6",
+-      "resolved": "https://registry.npmjs.org/@babel/template/-/template-7.28.6.tgz",
+-      "integrity": "sha512-YA6Ma2KsCdGb+WC6UpBVFJGXL58MDA6oyONbjyF/+5sBgxY/dwkhLogbMT2GXXyU84/IhRw/2D1Os1B/giz+BQ==",
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/template/-/template-7.29.7.tgz",
++      "integrity": "sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/code-frame": "^7.28.6",
+-        "@babel/parser": "^7.28.6",
+-        "@babel/types": "^7.28.6"
++        "@babel/code-frame": "^7.29.7",
++        "@babel/parser": "^7.29.7",
++        "@babel/types": "^7.29.7"
+       },
+       "engines": {
+         "node": ">=6.9.0"
+       }
+     },
+     "node_modules/@babel/traverse": {
+-      "version": "7.29.0",
+-      "resolved": "https://registry.npmjs.org/@babel/traverse/-/traverse-7.29.0.tgz",
+-      "integrity": "sha512-4HPiQr0X7+waHfyXPZpWPfWL/J7dcN1mx9gL6WdQVMbPnF3+ZhSMs8tCxN7oHddJE9fhNE7+lxdnlyemKfJRuA==",
++      "version": "7.29.8",
++      "resolved": "https://registry.npmjs.org/@babel/traverse/-/traverse-7.29.8.tgz",
++      "integrity": "sha512-I5z7H3bf/41ktsNVLtpN0wAa336HkqIHQ5BuPLEhTkt1jVSyZpeNKIzTgEWmlxjdg81R0IgUCcaE+Ok3NvrfZg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/code-frame": "^7.29.0",
+-        "@babel/generator": "^7.29.0",
+-        "@babel/helper-globals": "^7.28.0",
+-        "@babel/parser": "^7.29.0",
+-        "@babel/template": "^7.28.6",
+-        "@babel/types": "^7.29.0",
++        "@babel/code-frame": "^7.29.7",
++        "@babel/generator": "^7.29.8",
++        "@babel/helper-globals": "^7.29.7",
++        "@babel/parser": "^7.29.8",
++        "@babel/template": "^7.29.7",
++        "@babel/types": "^7.29.8",
+         "debug": "^4.3.1"
+       },
+       "engines": {
+@@ -268,14 +269,14 @@
+       }
+     },
+     "node_modules/@babel/types": {
+-      "version": "7.29.0",
+-      "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.0.tgz",
+-      "integrity": "sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==",
++      "version": "7.29.8",
++      "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.29.8.tgz",
++      "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@babel/helper-string-parser": "^7.27.1",
+-        "@babel/helper-validator-identifier": "^7.28.5"
++        "@babel/helper-string-parser": "^7.29.7",
++        "@babel/helper-validator-identifier": "^7.29.7"
+       },
+       "engines": {
+         "node": ">=6.9.0"
+@@ -294,9 +295,9 @@
+       }
+     },
+     "node_modules/@emnapi/runtime": {
+-      "version": "1.9.2",
+-      "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.9.2.tgz",
+-      "integrity": "sha512-3U4+MIWHImeyu1wnmVygh5WlgfYDtyf0k8AbLhMFxOipihf6nrWC4syIm/SwEeec0mNSafiiNnMJwbza/Is6Lw==",
++      "version": "1.11.3",
++      "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.11.3.tgz",
++      "integrity": "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==",
+       "license": "MIT",
+       "optional": true,
+       "dependencies": {
+@@ -459,29 +460,43 @@
+       }
+     },
+     "node_modules/@humanfs/core": {
+-      "version": "0.19.1",
+-      "resolved": "https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz",
+-      "integrity": "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==",
++      "version": "0.19.2",
++      "resolved": "https://registry.npmjs.org/@humanfs/core/-/core-0.19.2.tgz",
++      "integrity": "sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==",
+       "dev": true,
+       "license": "Apache-2.0",
++      "dependencies": {
++        "@humanfs/types": "^0.15.0"
++      },
+       "engines": {
+         "node": ">=18.18.0"
+       }
+     },
+     "node_modules/@humanfs/node": {
+-      "version": "0.16.7",
+-      "resolved": "https://registry.npmjs.org/@humanfs/node/-/node-0.16.7.tgz",
+-      "integrity": "sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==",
++      "version": "0.16.8",
++      "resolved": "https://registry.npmjs.org/@humanfs/node/-/node-0.16.8.tgz",
++      "integrity": "sha512-gE1eQNZ3R++kTzFUpdGlpmy8kDZD/MLyHqDwqjkVQI0JMdI1D51sy1H958PNXYkM2rAac7e5/CnIKZrHtPh3BQ==",
+       "dev": true,
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "@humanfs/core": "^0.19.1",
++        "@humanfs/core": "^0.19.2",
++        "@humanfs/types": "^0.15.0",
+         "@humanwhocodes/retry": "^0.4.0"
+       },
+       "engines": {
+         "node": ">=18.18.0"
+       }
+     },
++    "node_modules/@humanfs/types": {
++      "version": "0.15.0",
++      "resolved": "https://registry.npmjs.org/@humanfs/types/-/types-0.15.0.tgz",
++      "integrity": "sha512-ZZ1w0aoQkwuUuC7Yf+7sdeaNfqQiiLcSRbfI08oAxqLtpXQr9AIVX7Ay7HLDuiLYAaFPu8oBYNq/QIi9URHJ3Q==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=18.18.0"
++      }
++    },
+     "node_modules/@humanwhocodes/module-importer": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/@humanwhocodes/module-importer/-/module-importer-1.0.1.tgz",
+@@ -521,9 +536,9 @@
+       }
+     },
+     "node_modules/@img/sharp-darwin-arm64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.34.5.tgz",
+-      "integrity": "sha512-imtQ3WMJXbMY4fxb/Ndp6HBTNVtWCUI0WdobyheGf5+ad6xX8VIDO8u2xE4qc/fr08CKG/7dDseFtn6M6g/r3w==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.35.5.tgz",
++      "integrity": "sha512-QRUlFQ0WxvdWyqqG/WtI3iupfD5rBzmCHXSdPsY91sAtVtTo7Q4cb6zOccZ3gqEqkr0f1As1ehLqmEpDsRf+lg==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -533,19 +548,19 @@
+         "darwin"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-darwin-arm64": "1.2.4"
++        "@img/sharp-libvips-darwin-arm64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-darwin-x64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-darwin-x64/-/sharp-darwin-x64-0.34.5.tgz",
+-      "integrity": "sha512-YNEFAF/4KQ/PeW0N+r+aVVsoIY0/qxxikF2SWdp+NRkmMB7y9LBZAVqQ4yhGCm/H3H270OSykqmQMKLBhBJDEw==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-darwin-x64/-/sharp-darwin-x64-0.35.5.tgz",
++      "integrity": "sha512-+BR255RhDlpygUpOc/Jdt1nT6DQ3XG/ERo5wbcdOf5Q320dKtPCKPLR1LJs9VGXRaMa8l1uUa0tkCNOXiAxZUw==",
+       "cpu": [
+         "x64"
+       ],
+@@ -555,19 +570,38 @@
+         "darwin"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-darwin-x64": "1.2.4"
++        "@img/sharp-libvips-darwin-x64": "1.3.4"
++      }
++    },
++    "node_modules/@img/sharp-freebsd-wasm32": {
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-freebsd-wasm32/-/sharp-freebsd-wasm32-0.35.5.tgz",
++      "integrity": "sha512-Y/z91nEZ4uIBX5X3nfTovjU9lHNKFYbL2lpHCLVNmXQK03VIZvXBBt0KxbPGp2SdGSF+2mQU4e+hQaWOt86iAw==",
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "dependencies": {
++        "@img/sharp-wasm32": "0.35.5"
++      },
++      "engines": {
++        "node": ">=20.9.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/libvips"
+       }
+     },
+     "node_modules/@img/sharp-libvips-darwin-arm64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.2.4.tgz",
+-      "integrity": "sha512-zqjjo7RatFfFoP0MkQ51jfuFZBnVE2pRiaydKJ1G/rHZvnsrHAOcQALIi9sA5co5xenQdTugCvtb1cuf78Vf4g==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.3.4.tgz",
++      "integrity": "sha512-5R89nBYiRdUlSWJxPhO+GVtaXzXSxKnRu/xqMn3KTA3L9EB9Oy/P+Nn2f2vlhPuUdy/Zusb2DarbyTpGCfEDuw==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -581,9 +615,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-darwin-x64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-darwin-x64/-/sharp-libvips-darwin-x64-1.2.4.tgz",
+-      "integrity": "sha512-1IOd5xfVhlGwX+zXv2N93k0yMONvUlANylbJw1eTah8K/Jtpi15KC+WSiaX/nBmbm2HxRM1gZ0nSdjSsrZbGKg==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-darwin-x64/-/sharp-libvips-darwin-x64-1.3.4.tgz",
++      "integrity": "sha512-iR2OKH80yi0U+dUplyh3/xdpFvps6YkCwsXenIJxqxR1v9o+xtKTGbS9H7cps+2Vxjc8B1j96p75NmTGjIhtpQ==",
+       "cpu": [
+         "x64"
+       ],
+@@ -597,9 +631,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linux-arm": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm/-/sharp-libvips-linux-arm-1.2.4.tgz",
+-      "integrity": "sha512-bFI7xcKFELdiNCVov8e44Ia4u2byA+l3XtsAj+Q8tfCwO6BQ8iDojYdvoPMqsKDkuoOo+X6HZA0s0q11ANMQ8A==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm/-/sharp-libvips-linux-arm-1.3.4.tgz",
++      "integrity": "sha512-LmRtTsOHuvM2+wlO2Db37dx5MiZhB0FvSunciw48YjdOkZz9KAiRbm8ujeMOA1INqmei5NapFxYEK1D1ZSidmw==",
+       "cpu": [
+         "arm"
+       ],
+@@ -613,9 +647,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linux-arm64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm64/-/sharp-libvips-linux-arm64-1.2.4.tgz",
+-      "integrity": "sha512-excjX8DfsIcJ10x1Kzr4RcWe1edC9PquDRRPx3YVCvQv+U5p7Yin2s32ftzikXojb1PIFc/9Mt28/y+iRklkrw==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-arm64/-/sharp-libvips-linux-arm64-1.3.4.tgz",
++      "integrity": "sha512-Y3dgX/6lE2QhQb+Gxy0WZxfg9MEm/JBjamZpS2IklP7xIQoKN4hzAm7KcMVGtaVDt3neE9OKBC7vAfonA/Lr1A==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -629,9 +663,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linux-ppc64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-ppc64/-/sharp-libvips-linux-ppc64-1.2.4.tgz",
+-      "integrity": "sha512-FMuvGijLDYG6lW+b/UvyilUWu5Ayu+3r2d1S8notiGCIyYU/76eig1UfMmkZ7vwgOrzKzlQbFSuQfgm7GYUPpA==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-ppc64/-/sharp-libvips-linux-ppc64-1.3.4.tgz",
++      "integrity": "sha512-Le6boB8Tai0Nis+gIxIpKx68UDVVIqdR8Tin5Yf1z2LJJQLDJvCDRqRu+jC2qCoD+eIomonmOwB4smBRxfVpYQ==",
+       "cpu": [
+         "ppc64"
+       ],
+@@ -645,9 +679,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linux-riscv64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-riscv64/-/sharp-libvips-linux-riscv64-1.2.4.tgz",
+-      "integrity": "sha512-oVDbcR4zUC0ce82teubSm+x6ETixtKZBh/qbREIOcI3cULzDyb18Sr/Wcyx7NRQeQzOiHTNbZFF1UwPS2scyGA==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-riscv64/-/sharp-libvips-linux-riscv64-1.3.4.tgz",
++      "integrity": "sha512-aHkkIEHPRdQEegJN20MLmGtxYD9R2wQr3Cwpddnu5+YKMt6Uzax7S9h5gpZTo8wyrGuZSlfQ63OevL5mTyOC7Q==",
+       "cpu": [
+         "riscv64"
+       ],
+@@ -661,9 +695,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linux-s390x": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-s390x/-/sharp-libvips-linux-s390x-1.2.4.tgz",
+-      "integrity": "sha512-qmp9VrzgPgMoGZyPvrQHqk02uyjA0/QrTO26Tqk6l4ZV0MPWIW6LTkqOIov+J1yEu7MbFQaDpwdwJKhbJvuRxQ==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-s390x/-/sharp-libvips-linux-s390x-1.3.4.tgz",
++      "integrity": "sha512-ra/mB6MikESDUO7Yg+Mi95bFBb9GsObURuhnOv3OqknjGe9sZrG8tCe9q0xSIGrtLgvgw0gKnFWcK4blSgQOuQ==",
+       "cpu": [
+         "s390x"
+       ],
+@@ -677,9 +711,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linux-x64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.2.4.tgz",
+-      "integrity": "sha512-tJxiiLsmHc9Ax1bz3oaOYBURTXGIRDODBqhveVHonrHJ9/+k89qbLl0bcJns+e4t4rvaNBxaEZsFtSfAdquPrw==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.3.4.tgz",
++      "integrity": "sha512-GJ//SSXbnwSDes02umB3nDJLFcQzw8a18V8fyhqr6tV515tOEMdImjjxj1AoafMRz56F3PHgftnj1QEKSU1zkw==",
+       "cpu": [
+         "x64"
+       ],
+@@ -693,9 +727,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linuxmusl-arm64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-arm64/-/sharp-libvips-linuxmusl-arm64-1.2.4.tgz",
+-      "integrity": "sha512-FVQHuwx1IIuNow9QAbYUzJ+En8KcVm9Lk5+uGUQJHaZmMECZmOlix9HnH7n1TRkXMS0pGxIJokIVB9SuqZGGXw==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-arm64/-/sharp-libvips-linuxmusl-arm64-1.3.4.tgz",
++      "integrity": "sha512-hvulFwtjUcagsis6BBxHwGFwWoNZjgYmULGVrZcyfNbjA8hKILbRxGg15/7w5HDyXHXUos/j6baAWqnCyQ2DWA==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -709,9 +743,9 @@
+       }
+     },
+     "node_modules/@img/sharp-libvips-linuxmusl-x64": {
+-      "version": "1.2.4",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.2.4.tgz",
+-      "integrity": "sha512-+LpyBk7L44ZIXwz/VYfglaX/okxezESc6UxDSoyo2Ks6Jxc4Y7sGjpgU9s4PMgqgjj1gZCylTieNamqA1MF7Dg==",
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.3.4.tgz",
++      "integrity": "sha512-6zXKeE/p39I1AmA3cJG35eyBGNqNddLnUXjhwBnsGjFPWqf5VKkDBEqaEkPDoTEtkxwi2vv8Tcr2mDyP4So7Fg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -725,9 +759,9 @@
+       }
+     },
+     "node_modules/@img/sharp-linux-arm": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linux-arm/-/sharp-linux-arm-0.34.5.tgz",
+-      "integrity": "sha512-9dLqsvwtg1uuXBGZKsxem9595+ujv0sJ6Vi8wcTANSFpwV/GONat5eCkzQo/1O6zRIkh0m/8+5BjrRr7jDUSZw==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linux-arm/-/sharp-linux-arm-0.35.5.tgz",
++      "integrity": "sha512-LEaXK2WdXVK5ykcw0buWyPMsmLLL2vpHLD6yrNSW+JGEL3BZPA4tpKN6iaMc4AxTTAoaX/sU1rOL51lcIz48ZQ==",
+       "cpu": [
+         "arm"
+       ],
+@@ -737,19 +771,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linux-arm": "1.2.4"
++        "@img/sharp-libvips-linux-arm": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linux-arm64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linux-arm64/-/sharp-linux-arm64-0.34.5.tgz",
+-      "integrity": "sha512-bKQzaJRY/bkPOXyKx5EVup7qkaojECG6NLYswgktOZjaXecSAeCWiZwwiFf3/Y+O1HrauiE3FVsGxFg8c24rZg==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linux-arm64/-/sharp-linux-arm64-0.35.5.tgz",
++      "integrity": "sha512-LYVx5JTsOM2CBzmxreh+nl64/3H6Xb09iSLknqH47z2T2DFFxDeFLP5y4dJwe6H7uGQlHPyEEtIqyo3DYsRwdQ==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -759,19 +793,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linux-arm64": "1.2.4"
++        "@img/sharp-libvips-linux-arm64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linux-ppc64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linux-ppc64/-/sharp-linux-ppc64-0.34.5.tgz",
+-      "integrity": "sha512-7zznwNaqW6YtsfrGGDA6BRkISKAAE1Jo0QdpNYXNMHu2+0dTrPflTLNkpc8l7MUP5M16ZJcUvysVWWrMefZquA==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linux-ppc64/-/sharp-linux-ppc64-0.35.5.tgz",
++      "integrity": "sha512-QVxAAq8evVRI9ia2vqgwrmWucn5Dfv+JdWzj75pD8omHLPSP7f8p20O8jxzjCcuCEQEOtYOZUmX1hkiZ0kdevA==",
+       "cpu": [
+         "ppc64"
+       ],
+@@ -781,19 +815,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linux-ppc64": "1.2.4"
++        "@img/sharp-libvips-linux-ppc64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linux-riscv64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linux-riscv64/-/sharp-linux-riscv64-0.34.5.tgz",
+-      "integrity": "sha512-51gJuLPTKa7piYPaVs8GmByo7/U7/7TZOq+cnXJIHZKavIRHAP77e3N2HEl3dgiqdD/w0yUfiJnII77PuDDFdw==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linux-riscv64/-/sharp-linux-riscv64-0.35.5.tgz",
++      "integrity": "sha512-LtdreXguaavKODPIfzJ4kffx7UNt1omwtK0rch4EBbbSTXPnxWmYSayXdLJw0fJzQ97kHt1gL/yh4tvU+nCyRQ==",
+       "cpu": [
+         "riscv64"
+       ],
+@@ -803,19 +837,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linux-riscv64": "1.2.4"
++        "@img/sharp-libvips-linux-riscv64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linux-s390x": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linux-s390x/-/sharp-linux-s390x-0.34.5.tgz",
+-      "integrity": "sha512-nQtCk0PdKfho3eC5MrbQoigJ2gd1CgddUMkabUj+rBevs8tZ2cULOx46E7oyX+04WGfABgIwmMC0VqieTiR4jg==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linux-s390x/-/sharp-linux-s390x-0.35.5.tgz",
++      "integrity": "sha512-UZasTOFiYzotTsGOCu42BfUzP6Tu6Do/947iRm1RsLKvlllxwGcn4RN27LibGWceix4Y+Pmw3jsnTcCQIgWjqA==",
+       "cpu": [
+         "s390x"
+       ],
+@@ -825,19 +859,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linux-s390x": "1.2.4"
++        "@img/sharp-libvips-linux-s390x": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linux-x64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.34.5.tgz",
+-      "integrity": "sha512-MEzd8HPKxVxVenwAa+JRPwEC7QFjoPWuS5NZnBt6B3pu7EG2Ge0id1oLHZpPJdn3OQK+BQDiw9zStiHBTJQQQQ==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.35.5.tgz",
++      "integrity": "sha512-SxFtLTeJInhAA9Q836kux2vZNeOBQEx658qvbboZScr0wIARym3IcGmW7KpVD5sbVg0Ojy+udFQdayYIZyoNog==",
+       "cpu": [
+         "x64"
+       ],
+@@ -847,19 +881,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linux-x64": "1.2.4"
++        "@img/sharp-libvips-linux-x64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linuxmusl-arm64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linuxmusl-arm64/-/sharp-linuxmusl-arm64-0.34.5.tgz",
+-      "integrity": "sha512-fprJR6GtRsMt6Kyfq44IsChVZeGN97gTD331weR1ex1c1rypDEABN6Tm2xa1wE6lYb5DdEnk03NZPqA7Id21yg==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linuxmusl-arm64/-/sharp-linuxmusl-arm64-0.35.5.tgz",
++      "integrity": "sha512-9HbMclmI1zlNkFRs3z9/eBtDjfD0sGlrX1z6b1qwmiFY5ElDLh4BC0LPBdVp7z1DXFiKlIcznf+ZlsuZzLxQqg==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -869,19 +903,19 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linuxmusl-arm64": "1.2.4"
++        "@img/sharp-libvips-linuxmusl-arm64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-linuxmusl-x64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.34.5.tgz",
+-      "integrity": "sha512-Jg8wNT1MUzIvhBFxViqrEhWDGzqymo3sV7z7ZsaWbZNDLXRJZoRGrjulp60YYtV4wfY8VIKcWidjojlLcWrd8Q==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.35.5.tgz",
++      "integrity": "sha512-4KOphqB035HrVdqLZfCgMzzERrQkkzOwRhl4OAkRO1YCldbaFjySXMaK534Mo0V+LndnlJk+sbUyLeU0ULyD1A==",
+       "cpu": [
+         "x64"
+       ],
+@@ -891,38 +925,54 @@
+         "linux"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-libvips-linuxmusl-x64": "1.2.4"
++        "@img/sharp-libvips-linuxmusl-x64": "1.3.4"
+       }
+     },
+     "node_modules/@img/sharp-wasm32": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-wasm32/-/sharp-wasm32-0.34.5.tgz",
+-      "integrity": "sha512-OdWTEiVkY2PHwqkbBI8frFxQQFekHaSSkUIJkwzclWZe64O1X4UlUjqqqLaPbUpMOQk6FBu/HtlGXNblIs0huw==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-wasm32/-/sharp-wasm32-0.35.5.tgz",
++      "integrity": "sha512-Ptsga1su4tQx+LLF1ECS9U6nz5kmrXKo6XVbtR48Ke3ZRxxgaWBu7IDtEe1quo8hiupwm6WFqxVlXaSf7IINGQ==",
++      "license": "Apache-2.0 AND LGPL-3.0-or-later AND MIT",
++      "optional": true,
++      "dependencies": {
++        "@emnapi/runtime": "^1.11.3"
++      },
++      "engines": {
++        "node": ">=20.9.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/libvips"
++      }
++    },
++    "node_modules/@img/sharp-webcontainers-wasm32": {
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-webcontainers-wasm32/-/sharp-webcontainers-wasm32-0.35.5.tgz",
++      "integrity": "sha512-hfhF/FmoQyTUkA0bIKFOtw536BQSeBMe6BF6QyWlrPxT754+TFLaZ7sKKTfvvM0yJgKgaYTwnFCIZ/GuDw5SUA==",
+       "cpu": [
+         "wasm32"
+       ],
+-      "license": "Apache-2.0 AND LGPL-3.0-or-later AND MIT",
++      "license": "Apache-2.0",
+       "optional": true,
+       "dependencies": {
+-        "@emnapi/runtime": "^1.7.0"
++        "@img/sharp-wasm32": "0.35.5"
+       },
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       }
+     },
+     "node_modules/@img/sharp-win32-arm64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-win32-arm64/-/sharp-win32-arm64-0.34.5.tgz",
+-      "integrity": "sha512-WQ3AgWCWYSb2yt+IG8mnC6Jdk9Whs7O0gxphblsLvdhSpSTtmu69ZG1Gkb6NuvxsNACwiPV6cNSZNzt0KPsw7g==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-win32-arm64/-/sharp-win32-arm64-0.35.5.tgz",
++      "integrity": "sha512-X4t7g+7ZA5DKblCBEXGjUqqemj4vczING/5viFwAL8h4N3qYeyjwdCvRLHi4EdOUI+2Z7UFlp1VM+p/AuEtm6Q==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -932,16 +982,16 @@
+         "win32"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       }
+     },
+     "node_modules/@img/sharp-win32-ia32": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-win32-ia32/-/sharp-win32-ia32-0.34.5.tgz",
+-      "integrity": "sha512-FV9m/7NmeCmSHDD5j4+4pNI8Cp3aW+JvLoXcTUo0IqyjSfAZJ8dIUmijx1qaJsIiU+Hosw6xM5KijAWRJCSgNg==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-win32-ia32/-/sharp-win32-ia32-0.35.5.tgz",
++      "integrity": "sha512-5Zm82LoBc43nhwNybZlG7Y1KO//Zhsn306fQl29ZOuStHLGTo3BWL83q3cznX0poxSAMuYL1On/BHBxkBeKr6A==",
+       "cpu": [
+         "ia32"
+       ],
+@@ -951,16 +1001,16 @@
+         "win32"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": "^20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       }
+     },
+     "node_modules/@img/sharp-win32-x64": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.34.5.tgz",
+-      "integrity": "sha512-+29YMsqY2/9eFEiW93eqWnuLcWcufowXewwSNIT6UwZdUUCrM3oFjMWH/Z6/TMmb4hlFenmfAVbpWeup2jryCw==",
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/@img/sharp-win32-x64/-/sharp-win32-x64-0.35.5.tgz",
++      "integrity": "sha512-x76eH0vEiHlcMQu8Y8IenntaACtddpT6W0wmXtWrnKcnKI7ME5DdgqhAD6SEWOEl1v2zDvkZDhFA9KnURwpfqg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -970,7 +1020,7 @@
+         "win32"
+       ],
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+@@ -1040,25 +1090,26 @@
+       }
+     },
+     "node_modules/@next/env": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/env/-/env-16.2.2.tgz",
+-      "integrity": "sha512-LqSGz5+xGk9EL/iBDr2yo/CgNQV6cFsNhRR2xhSXYh7B/hb4nePCxlmDvGEKG30NMHDFf0raqSyOZiQrO7BkHQ==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/env/-/env-16.3.8.tgz",
++      "integrity": "sha512-Al9zqHVV7TJv0eFuOU4U7Lvv74PTih4Ch63sk2xCIpSTkE3udFnaOcnzP2lQVymiL7yS9Cj2iClUXlR3EQ5sEw==",
+       "license": "MIT"
+     },
+     "node_modules/@next/eslint-plugin-next": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.2.2.tgz",
+-      "integrity": "sha512-IOPbWzDQ+76AtjZioaCjpIY72xNSDMnarZ2GMQ4wjNLvnJEJHqxQwGFhgnIWLV9klb4g/+amg88Tk5OXVpyLTw==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.3.8.tgz",
++      "integrity": "sha512-eCR9RcLTZrVS+K3+VOhi0xMdUUGNuriCHHhU1ZoABC/QQ/Gp0OWbLKQxV2/9DkmihYdYRcQWFmZXW8M1AMUXYw==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
++        "@eslint-community/eslint-utils": "4.9.1",
+         "fast-glob": "3.3.1"
+       }
+     },
+     "node_modules/@next/swc-darwin-arm64": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-16.2.2.tgz",
+-      "integrity": "sha512-B92G3ulrwmkDSEJEp9+XzGLex5wC1knrmCSIylyVeiAtCIfvEJYiN3v5kXPlYt5R4RFlsfO/v++aKV63Acrugg==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-16.3.8.tgz",
++      "integrity": "sha512-2JPRMh2nmQG5CiL7cXGL9AGwnPWJQ//cTtAUCT+w511QHk79SYz3LGv/pc5X643B/WEO0rvu3Yww0hqwt3kgeA==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1072,9 +1123,9 @@
+       }
+     },
+     "node_modules/@next/swc-darwin-x64": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-16.2.2.tgz",
+-      "integrity": "sha512-7ZwSgNKJNQiwW0CKhNm9B1WS2L1Olc4B2XY0hPYCAL3epFnugMhuw5TMWzMilQ3QCZcCHoYm9NGWTHbr5REFxw==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-16.3.8.tgz",
++      "integrity": "sha512-GZtCCOBKJ4leVIT/Th0llWKhD1ca92lzbQiS5R5ON9QkoiFnilFsebDae1JU2a3HWoKMEmEZWGs1AGLavVM72Q==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1088,9 +1139,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-arm64-gnu": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-16.2.2.tgz",
+-      "integrity": "sha512-c3m8kBHMziMgo2fICOP/cd/5YlrxDU5YYjAJeQLyFsCqVF8xjOTH/QYG4a2u48CvvZZSj1eHQfBCbyh7kBr30Q==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-16.3.8.tgz",
++      "integrity": "sha512-O659ygeQYqneJ1fBKMpFxIFqYkYswu8IAS1OCKK/4f3ZgJJm1dRz4fVJZRi/kLLWjnBKnebOePA4WNv+sV1pVA==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1104,9 +1155,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-arm64-musl": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-16.2.2.tgz",
+-      "integrity": "sha512-VKLuscm0P/mIfzt+SDdn2+8TNNJ7f0qfEkA+az7OqQbjzKdBxAHs0UvuiVoCtbwX+dqMEL9U54b5wQ/aN3dHeg==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-16.3.8.tgz",
++      "integrity": "sha512-dSjKSyWpzxoO1d3DIZZcP4XJcNaKeLmxQMFOiYl5vuBRMmweIqnAhty8tAmRsvTss779cK1FtYnDMj40e4TQlg==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1120,9 +1171,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-x64-gnu": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-16.2.2.tgz",
+-      "integrity": "sha512-kU3OPHJq6sBUjOk7wc5zJ7/lipn8yGldMoAv4z67j6ov6Xo/JvzA7L7LCsyzzsXmgLEhk3Qkpwqaq/1+XpNR3g==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-16.3.8.tgz",
++      "integrity": "sha512-lbqOuz3RPRcv+o9msNsJw5x4+Y1ZwPTs6vmL6DCf7i0fZfvng/F59wyeDwqHIvV0mK//RBy/jJkZ+nCKsSMXjQ==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1136,9 +1187,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-x64-musl": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-16.2.2.tgz",
+-      "integrity": "sha512-CKXRILyErMtUftp+coGcZ38ZwE/Aqq45VMCcRLr2I4OXKrgxIBDXHnBgeX/UMil0S09i2JXaDL3Q+TN8D/cKmg==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-16.3.8.tgz",
++      "integrity": "sha512-+316WswI8ScVgZeUd+1KGaXkHhaYQzCjvH/05TZSpJ8zBizb1a4G7DtO7F12jcBIqMOtsz9ji1t48fmKtzqsGA==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1152,9 +1203,9 @@
+       }
+     },
+     "node_modules/@next/swc-win32-arm64-msvc": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-16.2.2.tgz",
+-      "integrity": "sha512-sS/jSk5VUoShUqINJFvNjVT7JfR5ORYj/+/ZpOYbbIohv/lQfduWnGAycq2wlknbOql2xOR0DoV0s6Xfcy49+g==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-16.3.8.tgz",
++      "integrity": "sha512-ji0gd4kMYUxO+1fJBIbiBVRCjzG/lloiyCccnlebvb1ZJ5qXCPZqYg4Jl1DrrixnWNMKylzgpmMWx0yNDYXlzw==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1168,9 +1219,9 @@
+       }
+     },
+     "node_modules/@next/swc-win32-x64-msvc": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-16.2.2.tgz",
+-      "integrity": "sha512-aHaKceJgdySReT7qeck5oShucxWRiiEuwCGK8HHALe6yZga8uyFpLkPgaRw3kkF04U7ROogL/suYCNt/+CuXGA==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-16.3.8.tgz",
++      "integrity": "sha512-WcTlaKt/TWkh5kUjdJcUmB1XgZ+1c6fz4Y9fDHL73YNSdGaUWjceeWrrlwF0nv19iABYWC4iAq1oX1w4Bn0vfg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1337,9 +1388,9 @@
+       }
+     },
+     "node_modules/@swc/helpers": {
+-      "version": "0.5.15",
+-      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.15.tgz",
+-      "integrity": "sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==",
++      "version": "0.5.23",
++      "resolved": "https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.23.tgz",
++      "integrity": "sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==",
+       "license": "Apache-2.0",
+       "dependencies": {
+         "tslib": "^2.8.0"
+@@ -1568,6 +1619,70 @@
+         "node": ">=14.0.0"
+       }
+     },
++    "node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@emnapi/core": {
++      "version": "1.8.1",
++      "dev": true,
++      "inBundle": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "@emnapi/wasi-threads": "1.1.0",
++        "tslib": "^2.4.0"
++      }
++    },
++    "node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@emnapi/runtime": {
++      "version": "1.8.1",
++      "dev": true,
++      "inBundle": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "tslib": "^2.4.0"
++      }
++    },
++    "node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@emnapi/wasi-threads": {
++      "version": "1.1.0",
++      "dev": true,
++      "inBundle": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "tslib": "^2.4.0"
++      }
++    },
++    "node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@napi-rs/wasm-runtime": {
++      "version": "1.1.1",
++      "dev": true,
++      "inBundle": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "@emnapi/core": "^1.7.1",
++        "@emnapi/runtime": "^1.7.1",
++        "@tybys/wasm-util": "^0.10.1"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@tybys/wasm-util": {
++      "version": "0.10.1",
++      "dev": true,
++      "inBundle": true,
++      "license": "MIT",
++      "optional": true,
++      "dependencies": {
++        "tslib": "^2.4.0"
++      }
++    },
++    "node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/tslib": {
++      "version": "2.8.1",
++      "dev": true,
++      "inBundle": true,
++      "license": "0BSD",
++      "optional": true
++    },
+     "node_modules/@tailwindcss/oxide-win32-arm64-msvc": {
+       "version": "4.2.2",
+       "resolved": "https://registry.npmjs.org/@tailwindcss/oxide-win32-arm64-msvc/-/oxide-win32-arm64-msvc-4.2.2.tgz",
+@@ -1885,16 +2000,16 @@
+       }
+     },
+     "node_modules/@typescript-eslint/typescript-estree/node_modules/brace-expansion": {
+-      "version": "5.0.5",
+-      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.5.tgz",
+-      "integrity": "sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==",
++      "version": "5.0.12",
++      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.12.tgz",
++      "integrity": "sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+         "balanced-match": "^4.0.2"
+       },
+       "engines": {
+-        "node": "18 || 20 || >=22"
++        "node": "20 || >=22"
+       }
+     },
+     "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch": {
+@@ -2544,9 +2659,9 @@
+       "license": "MIT"
+     },
+     "node_modules/baseline-browser-mapping": {
+-      "version": "2.10.16",
+-      "resolved": "https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.10.16.tgz",
+-      "integrity": "sha512-Lyf3aK28zpsD1yQMiiHD4RvVb6UdMoo8xzG2XzFIfR9luPzOpcBlAsT/qfB1XWS1bxWT+UtE4WmQgsp297FYOA==",
++      "version": "2.11.27",
++      "resolved": "https://registry.npmjs.org/baseline-browser-mapping/-/baseline-browser-mapping-2.11.27.tgz",
++      "integrity": "sha512-ElY12DaROGuan+lMmZ8Cvo/ZUbXPe7Enc/9VU/b1T3Kp4dwytRcNdR8DoSJN5SNJT/CuvcCA0DHDVmMOCePdRQ==",
+       "license": "Apache-2.0",
+       "bin": {
+         "baseline-browser-mapping": "dist/cli.cjs"
+@@ -2556,9 +2671,9 @@
+       }
+     },
+     "node_modules/brace-expansion": {
+-      "version": "1.1.13",
+-      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.13.tgz",
+-      "integrity": "sha512-9ZLprWS6EENmhEOpjCYW2c8VkmOvckIJZfkr7rBW6dObmfgJ/L1GpSYW5Hpo9lDz4D1+n0Ckz8rU7FwHDQiG/w==",
++      "version": "1.1.21",
++      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.21.tgz",
++      "integrity": "sha512-9zeA+KLZNNzglF2TPKRQEDyx6Yby7daAkuy8MiPzpXPsYDWi/DRM8jmwUDxokQjYqBpv5DgPiwD4h4ZZSy1Ujw==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+@@ -2580,9 +2695,9 @@
+       }
+     },
+     "node_modules/browserslist": {
+-      "version": "4.28.2",
+-      "resolved": "https://registry.npmjs.org/browserslist/-/browserslist-4.28.2.tgz",
+-      "integrity": "sha512-48xSriZYYg+8qXna9kwqjIVzuQxi+KYWp2+5nCYnYKPTr0LvD89Jqk2Or5ogxz0NUMfIjhh2lIUX/LyX9B4oIg==",
++      "version": "4.29.3",
++      "resolved": "https://registry.npmjs.org/browserslist/-/browserslist-4.29.3.tgz",
++      "integrity": "sha512-1R4kiYKXGViqEN0CnoDrXc1StD9niAwu+j2dukWzrD4bJgsD4lDmEp0CRbc6E/vYJIfTHwPmwyaKtVSudICdPA==",
+       "dev": true,
+       "funding": [
+         {
+@@ -2600,11 +2715,11 @@
+       ],
+       "license": "MIT",
+       "dependencies": {
+-        "baseline-browser-mapping": "^2.10.12",
+-        "caniuse-lite": "^1.0.30001782",
+-        "electron-to-chromium": "^1.5.328",
+-        "node-releases": "^2.0.36",
+-        "update-browserslist-db": "^1.2.3"
++        "baseline-browser-mapping": "^2.11.26",
++        "caniuse-lite": "^1.0.30001813",
++        "electron-to-chromium": "^1.5.439",
++        "node-releases": "^2.0.57",
++        "update-browserslist-db": "^1.3.3"
+       },
+       "bin": {
+         "browserslist": "cli.js"
+@@ -2674,9 +2789,9 @@
+       }
+     },
+     "node_modules/caniuse-lite": {
+-      "version": "1.0.30001787",
+-      "resolved": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001787.tgz",
+-      "integrity": "sha512-mNcrMN9KeI68u7muanUpEejSLghOKlVhRqS/Za2IeyGllJ9I9otGpR9g3nsw7n4W378TE/LyIteA0+/FOZm4Kg==",
++      "version": "1.0.30001814",
++      "resolved": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001814.tgz",
++      "integrity": "sha512-/Uaf1lAzr59XcMpW0o96WoEfr+VXK2OX4U9AgFoiSHsVJ4HppnIFUjtYzsyDH2+tgANaQb2/oxYGwCPapN1FpA==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -2962,9 +3077,9 @@
+       }
+     },
+     "node_modules/electron-to-chromium": {
+-      "version": "1.5.334",
+-      "resolved": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.5.334.tgz",
+-      "integrity": "sha512-mgjZAz7Jyx1SRCwEpy9wefDS7GvNPazLthHg8eQMJ76wBdGQQDW33TCrUTvQ4wzpmOrv2zrFoD3oNufMdyMpog==",
++      "version": "1.5.444",
++      "resolved": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.5.444.tgz",
++      "integrity": "sha512-5ss/uJfoDYDHT0lfJzT6FbcskIzROIOPf0BbbFkGcvDzoJU7i//9GDrwwIHQVmIsrAGiF3ihpADBRIsrEFt1rQ==",
+       "dev": true,
+       "license": "ISC"
+     },
+@@ -3251,13 +3366,13 @@
+       }
+     },
+     "node_modules/eslint-config-next": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-16.2.2.tgz",
+-      "integrity": "sha512-6VlvEhwoug2JpVgjZDhyXrJXUEuPY++TddzIpTaIRvlvlXXFgvQUtm3+Zr84IjFm0lXtJt73w19JA08tOaZVwg==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-16.3.8.tgz",
++      "integrity": "sha512-81vovwMe6NGnoFsl0KUJWzlS+y239i3fdsxs49gSEX3pDQW2cuKy+fxUPXNkQqqx6OCPheYPtBlSufc9aZ0k+w==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "@next/eslint-plugin-next": "16.2.2",
++        "@next/eslint-plugin-next": "16.3.8",
+         "eslint-import-resolver-node": "^0.3.6",
+         "eslint-import-resolver-typescript": "^3.5.2",
+         "eslint-plugin-import": "^2.32.0",
+@@ -3648,9 +3763,9 @@
+       "license": "MIT"
+     },
+     "node_modules/fastq": {
+-      "version": "1.20.1",
+-      "resolved": "https://registry.npmjs.org/fastq/-/fastq-1.20.1.tgz",
+-      "integrity": "sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw==",
++      "version": "1.20.3",
++      "resolved": "https://registry.npmjs.org/fastq/-/fastq-1.20.3.tgz",
++      "integrity": "sha512-XKv5nnLs6nLF71NgiKJLIZFLkPyIEuOselLG7ujZnGrRfQK8HpvY+WqKhAJUAdLomwVHErVS4LfxFlPq0/FTAw==",
+       "dev": true,
+       "license": "ISC",
+       "dependencies": {
+@@ -4607,10 +4722,20 @@
+       "license": "MIT"
+     },
+     "node_modules/js-yaml": {
+-      "version": "4.1.1",
+-      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.1.tgz",
+-      "integrity": "sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==",
++      "version": "4.3.2",
++      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.3.2.tgz",
++      "integrity": "sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==",
+       "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/puzrin"
++        },
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/nodeca"
++        }
++      ],
+       "license": "MIT",
+       "dependencies": {
+         "argparse": "^2.0.1"
+@@ -5144,9 +5269,9 @@
+       "license": "MIT"
+     },
+     "node_modules/nanoid": {
+-      "version": "3.3.11",
+-      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.11.tgz",
+-      "integrity": "sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==",
++      "version": "3.3.20",
++      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.20.tgz",
++      "integrity": "sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==",
+       "funding": [
+         {
+           "type": "github",
+@@ -5185,16 +5310,16 @@
+       "license": "MIT"
+     },
+     "node_modules/next": {
+-      "version": "16.2.2",
+-      "resolved": "https://registry.npmjs.org/next/-/next-16.2.2.tgz",
+-      "integrity": "sha512-i6AJdyVa4oQjyvX/6GeER8dpY/xlIV+4NMv/svykcLtURJSy/WzDnnUk/TM4d0uewFHK7xSQz4TbIwPgjky+3A==",
++      "version": "16.3.8",
++      "resolved": "https://registry.npmjs.org/next/-/next-16.3.8.tgz",
++      "integrity": "sha512-U7QEZaTini6wKrb8A8hqLLqYQyCetegKjCpJOyxk642vWoMoU1x5PyZCJFvgYgiptA8xc5j/9xYlZFO7w9Sjmw==",
+       "license": "MIT",
+       "dependencies": {
+-        "@next/env": "16.2.2",
+-        "@swc/helpers": "0.5.15",
++        "@next/env": "16.3.8",
++        "@swc/helpers": "0.5.23",
+         "baseline-browser-mapping": "^2.9.19",
+         "caniuse-lite": "^1.0.30001579",
+-        "postcss": "8.4.31",
++        "postcss": "8.5.23",
+         "styled-jsx": "5.1.6"
+       },
+       "bin": {
+@@ -5204,15 +5329,15 @@
+         "node": ">=20.9.0"
+       },
+       "optionalDependencies": {
+-        "@next/swc-darwin-arm64": "16.2.2",
+-        "@next/swc-darwin-x64": "16.2.2",
+-        "@next/swc-linux-arm64-gnu": "16.2.2",
+-        "@next/swc-linux-arm64-musl": "16.2.2",
+-        "@next/swc-linux-x64-gnu": "16.2.2",
+-        "@next/swc-linux-x64-musl": "16.2.2",
+-        "@next/swc-win32-arm64-msvc": "16.2.2",
+-        "@next/swc-win32-x64-msvc": "16.2.2",
+-        "sharp": "^0.34.5"
++        "@next/swc-darwin-arm64": "16.3.8",
++        "@next/swc-darwin-x64": "16.3.8",
++        "@next/swc-linux-arm64-gnu": "16.3.8",
++        "@next/swc-linux-arm64-musl": "16.3.8",
++        "@next/swc-linux-x64-gnu": "16.3.8",
++        "@next/swc-linux-x64-musl": "16.3.8",
++        "@next/swc-win32-arm64-msvc": "16.3.8",
++        "@next/swc-win32-x64-msvc": "16.3.8",
++        "sharp": "^0.35.4"
+       },
+       "peerDependencies": {
+         "@opentelemetry/api": "^1.1.0",
+@@ -5237,34 +5362,6 @@
+         }
+       }
+     },
+-    "node_modules/next/node_modules/postcss": {
+-      "version": "8.4.31",
+-      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.4.31.tgz",
+-      "integrity": "sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==",
+-      "funding": [
+-        {
+-          "type": "opencollective",
+-          "url": "https://opencollective.com/postcss/"
+-        },
+-        {
+-          "type": "tidelift",
+-          "url": "https://tidelift.com/funding/github/npm/postcss"
+-        },
+-        {
+-          "type": "github",
+-          "url": "https://github.com/sponsors/ai"
+-        }
+-      ],
+-      "license": "MIT",
+-      "dependencies": {
+-        "nanoid": "^3.3.6",
+-        "picocolors": "^1.0.0",
+-        "source-map-js": "^1.0.2"
+-      },
+-      "engines": {
+-        "node": "^10 || ^12 || >=14"
+-      }
+-    },
+     "node_modules/node-exports-info": {
+       "version": "1.6.0",
+       "resolved": "https://registry.npmjs.org/node-exports-info/-/node-exports-info-1.6.0.tgz",
+@@ -5285,11 +5382,14 @@
+       }
+     },
+     "node_modules/node-releases": {
+-      "version": "2.0.37",
+-      "resolved": "https://registry.npmjs.org/node-releases/-/node-releases-2.0.37.tgz",
+-      "integrity": "sha512-1h5gKZCF+pO/o3Iqt5Jp7wc9rH3eJJ0+nh/CIoiRwjRxde/hAHyLPXYN4V3CqKAbiZPSeJFSWHmJsbkicta0Eg==",
++      "version": "2.0.57",
++      "resolved": "https://registry.npmjs.org/node-releases/-/node-releases-2.0.57.tgz",
++      "integrity": "sha512-kQK9LGGFiHtrWiNhZtA7Qbw17AQz+dmsEKODRIVTXA9+e5MS/2gZEBhYJt13GrAz5/IOZKddH/0Z3TP/Zgo+yw==",
+       "dev": true,
+-      "license": "MIT"
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      }
+     },
+     "node_modules/object-assign": {
+       "version": "4.1.1",
+@@ -5558,10 +5658,9 @@
+       }
+     },
+     "node_modules/postcss": {
+-      "version": "8.5.9",
+-      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.9.tgz",
+-      "integrity": "sha512-7a70Nsot+EMX9fFU3064K/kdHWZqGVY+BADLyXc8Dfv+mTLLVl6JzJpPaCZ2kQL9gIJvKXSLMHhqdRRjwQeFtw==",
+-      "dev": true,
++      "version": "8.5.23",
++      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.23.tgz",
++      "integrity": "sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -5578,7 +5677,7 @@
+       ],
+       "license": "MIT",
+       "dependencies": {
+-        "nanoid": "^3.3.11",
++        "nanoid": "^3.3.16",
+         "picocolors": "^1.1.1",
+         "source-map-js": "^1.2.1"
+       },
+@@ -5894,6 +5993,12 @@
+         "semver": "bin/semver.js"
+       }
+     },
++    "node_modules/server-only": {
++      "version": "0.0.1",
++      "resolved": "https://registry.npmjs.org/server-only/-/server-only-0.0.1.tgz",
++      "integrity": "sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==",
++      "license": "MIT"
++    },
+     "node_modules/set-function-length": {
+       "version": "1.2.2",
+       "resolved": "https://registry.npmjs.org/set-function-length/-/set-function-length-1.2.2.tgz",
+@@ -5950,54 +6055,59 @@
+       "license": "MIT"
+     },
+     "node_modules/sharp": {
+-      "version": "0.34.5",
+-      "resolved": "https://registry.npmjs.org/sharp/-/sharp-0.34.5.tgz",
+-      "integrity": "sha512-Ou9I5Ft9WNcCbXrU9cMgPBcCK8LiwLqcbywW3t4oDV37n1pzpuNLsYiAV8eODnjbtQlSDwZ2cUEeQz4E54Hltg==",
+-      "hasInstallScript": true,
++      "version": "0.35.5",
++      "resolved": "https://registry.npmjs.org/sharp/-/sharp-0.35.5.tgz",
++      "integrity": "sha512-Ywn4OnzGukp7CDMrp08RQ50YKmuwG47brZgIVPTvBaaAfQlRlygrRqSrxdCiL9M+LlzLBiJ68IR1QqvzHyjC7g==",
+       "license": "Apache-2.0",
+       "optional": true,
+       "dependencies": {
+-        "@img/colour": "^1.0.0",
++        "@img/colour": "^1.1.0",
+         "detect-libc": "^2.1.2",
+-        "semver": "^7.7.3"
++        "semver": "^7.8.5"
+       },
+       "engines": {
+-        "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
++        "node": ">=20.9.0"
+       },
+       "funding": {
+         "url": "https://opencollective.com/libvips"
+       },
+       "optionalDependencies": {
+-        "@img/sharp-darwin-arm64": "0.34.5",
+-        "@img/sharp-darwin-x64": "0.34.5",
+-        "@img/sharp-libvips-darwin-arm64": "1.2.4",
+-        "@img/sharp-libvips-darwin-x64": "1.2.4",
+-        "@img/sharp-libvips-linux-arm": "1.2.4",
+-        "@img/sharp-libvips-linux-arm64": "1.2.4",
+-        "@img/sharp-libvips-linux-ppc64": "1.2.4",
+-        "@img/sharp-libvips-linux-riscv64": "1.2.4",
+-        "@img/sharp-libvips-linux-s390x": "1.2.4",
+-        "@img/sharp-libvips-linux-x64": "1.2.4",
+-        "@img/sharp-libvips-linuxmusl-arm64": "1.2.4",
+-        "@img/sharp-libvips-linuxmusl-x64": "1.2.4",
+-        "@img/sharp-linux-arm": "0.34.5",
+-        "@img/sharp-linux-arm64": "0.34.5",
+-        "@img/sharp-linux-ppc64": "0.34.5",
+-        "@img/sharp-linux-riscv64": "0.34.5",
+-        "@img/sharp-linux-s390x": "0.34.5",
+-        "@img/sharp-linux-x64": "0.34.5",
+-        "@img/sharp-linuxmusl-arm64": "0.34.5",
+-        "@img/sharp-linuxmusl-x64": "0.34.5",
+-        "@img/sharp-wasm32": "0.34.5",
+-        "@img/sharp-win32-arm64": "0.34.5",
+-        "@img/sharp-win32-ia32": "0.34.5",
+-        "@img/sharp-win32-x64": "0.34.5"
++        "@img/sharp-darwin-arm64": "0.35.5",
++        "@img/sharp-darwin-x64": "0.35.5",
++        "@img/sharp-freebsd-wasm32": "0.35.5",
++        "@img/sharp-libvips-darwin-arm64": "1.3.4",
++        "@img/sharp-libvips-darwin-x64": "1.3.4",
++        "@img/sharp-libvips-linux-arm": "1.3.4",
++        "@img/sharp-libvips-linux-arm64": "1.3.4",
++        "@img/sharp-libvips-linux-ppc64": "1.3.4",
++        "@img/sharp-libvips-linux-riscv64": "1.3.4",
++        "@img/sharp-libvips-linux-s390x": "1.3.4",
++        "@img/sharp-libvips-linux-x64": "1.3.4",
++        "@img/sharp-libvips-linuxmusl-arm64": "1.3.4",
++        "@img/sharp-libvips-linuxmusl-x64": "1.3.4",
++        "@img/sharp-linux-arm": "0.35.5",
++        "@img/sharp-linux-arm64": "0.35.5",
++        "@img/sharp-linux-ppc64": "0.35.5",
++        "@img/sharp-linux-riscv64": "0.35.5",
++        "@img/sharp-linux-s390x": "0.35.5",
++        "@img/sharp-linux-x64": "0.35.5",
++        "@img/sharp-linuxmusl-arm64": "0.35.5",
++        "@img/sharp-linuxmusl-x64": "0.35.5",
++        "@img/sharp-webcontainers-wasm32": "0.35.5",
++        "@img/sharp-win32-arm64": "0.35.5",
++        "@img/sharp-win32-ia32": "0.35.5",
++        "@img/sharp-win32-x64": "0.35.5"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        }
+       }
+     },
+     "node_modules/sharp/node_modules/semver": {
+-      "version": "7.7.4",
+-      "resolved": "https://registry.npmjs.org/semver/-/semver-7.7.4.tgz",
+-      "integrity": "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==",
++      "version": "7.8.5",
++      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz",
++      "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==",
+       "license": "ISC",
+       "optional": true,
+       "bin": {
+@@ -6647,9 +6757,9 @@
+       }
+     },
+     "node_modules/update-browserslist-db": {
+-      "version": "1.2.3",
+-      "resolved": "https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.2.3.tgz",
+-      "integrity": "sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w==",
++      "version": "1.3.3",
++      "resolved": "https://registry.npmjs.org/update-browserslist-db/-/update-browserslist-db-1.3.3.tgz",
++      "integrity": "sha512-pJ2sYawQS0R/WI928Gj5GlPhTGzbMelq0+4INtSYNDV9ErKJcX6xjGWkoG/VnB3dpUm00zALaqkrUD77pO5TDQ==",
+       "dev": true,
+       "funding": [
+         {
+@@ -6809,9 +6919,9 @@
+       }
+     },
+     "node_modules/ws": {
+-      "version": "8.20.0",
+-      "resolved": "https://registry.npmjs.org/ws/-/ws-8.20.0.tgz",
+-      "integrity": "sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==",
++      "version": "8.22.0",
++      "resolved": "https://registry.npmjs.org/ws/-/ws-8.22.0.tgz",
++      "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==",
+       "license": "MIT",
+       "engines": {
+         "node": ">=10.0.0"
+diff --git a/package.json b/package.json
+index 88d50e4..d51d48f 100644
+--- a/package.json
++++ b/package.json
+@@ -6,7 +6,8 @@
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+-    "lint": "eslint"
++    "lint": "eslint",
++    "test:security": "node --test tests/*.test.cjs"
+   },
+   "dependencies": {
+     "@supabase/ssr": "^0.10.0",
+@@ -14,9 +15,10 @@
+     "date-fns": "^4.1.0",
+     "framer-motion": "^12.42.2",
+     "jszip": "^3.10.1",
+-    "next": "16.2.2",
++    "next": "16.3.8",
+     "react": "19.2.4",
+-    "react-dom": "19.2.4"
++    "react-dom": "19.2.4",
++    "server-only": "0.0.1"
+   },
+   "devDependencies": {
+     "@tailwindcss/postcss": "^4",
+@@ -24,7 +26,7 @@
+     "@types/react": "^19",
+     "@types/react-dom": "^19",
+     "eslint": "^9",
+-    "eslint-config-next": "16.2.2",
++    "eslint-config-next": "16.3.8",
+     "tailwindcss": "^4",
+     "typescript": "^5"
+   }
+diff --git a/src/app/actions/clicks.ts b/src/app/actions/clicks.ts
+index 22cee52..bbc785a 100644
+--- a/src/app/actions/clicks.ts
++++ b/src/app/actions/clicks.ts
+@@ -2,6 +2,7 @@
+ 
+ import { createClient } from "@/lib/supabase/server";
+ import { createAdminClient } from "@/lib/supabase/admin";
++import { validateLinkClickInput, validatePageViewInput } from "@/lib/input-validation";
+ 
+ export async function trackLinkClick(data: {
+   target_url: string;
+@@ -10,6 +11,7 @@ export async function trackLinkClick(data: {
+   user_agent?: string;
+   referrer?: string;
+ }) {
++  const validated = validateLinkClickInput(data);
+   const supabase = await createClient();
+   const {
+     data: { user },
+@@ -19,13 +21,13 @@ export async function trackLinkClick(data: {
+   const sessionId = user ? null : `anon-${Date.now()}`;
+ 
+   await supabase.from("link_clicks").insert({
+-    target_url: data.target_url,
+-    link_type: data.link_type || null,
+-    source_page: data.source_page || null,
++    target_url: validated.target_url,
++    link_type: validated.link_type,
++    source_page: validated.source_page,
+     user_id: user?.id || null,
+     session_id: sessionId,
+-    user_agent: data.user_agent || null,
+-    referrer: data.referrer || null,
++    user_agent: validated.user_agent,
++    referrer: validated.referrer,
+   });
+ }
+ 
+@@ -37,6 +39,7 @@ export async function trackPageView(data: {
+   utm_medium?: string;
+   utm_campaign?: string;
+ }) {
++  const validated = validatePageViewInput(data);
+   const userClient = await createClient();
+   const {
+     data: { user },
+@@ -47,14 +50,14 @@ export async function trackPageView(data: {
+   // Use admin client to bypass RLS — anonymous visitors can't insert via regular client
+   const admin = createAdminClient();
+   await admin.from("link_clicks").insert({
+-    target_url: data.page_url,
++    target_url: validated.page_url,
+     link_type: "page_view",
+-    source_page: data.referrer || null,
++    source_page: validated.referrer,
+     user_id: user?.id || null,
+     session_id: sessionId,
+-    user_agent: data.user_agent || null,
+-    referrer: [data.utm_source, data.utm_medium, data.utm_campaign]
++    user_agent: validated.user_agent,
++    referrer: [validated.utm_source, validated.utm_medium, validated.utm_campaign]
+       .filter(Boolean)
+-      .join(" | ") || data.referrer || null,
++      .join(" | ") || validated.referrer,
+   });
+ }
+diff --git a/src/app/actions/comments.ts b/src/app/actions/comments.ts
+index 92d6df6..64189f1 100644
+--- a/src/app/actions/comments.ts
++++ b/src/app/actions/comments.ts
+@@ -3,66 +3,42 @@
+ import { createClient } from "@/lib/supabase/server";
+ import { createAdminClient } from "@/lib/supabase/admin";
+ import { revalidatePath } from "next/cache";
++import { readAutoApprove, requireText, requireUuid } from "@/lib/input-validation";
+ 
+ export async function deleteComment(commentId: string) {
++  commentId = requireUuid(commentId, "معرّف التعليق");
+   const supabase = await createClient();
+   const {
+     data: { user },
++    error: authError,
+   } = await supabase.auth.getUser();
+-  if (!user) throw new Error("Not authenticated");
++  if (authError || !user) throw new Error("Not authenticated");
+ 
+-  // Verify the user is the author and get post_id for count update
+-  const { data: comment } = await supabase
++  // Verify ownership using the caller's RLS-bound client.
++  const { data: comment, error: commentError } = await supabase
+     .from("comments")
+-    .select("author_id, post_id")
++    .select("author_id")
+     .eq("id", commentId)
+     .single();
+ 
+-  if (!comment || comment.author_id !== user.id) {
++  if (commentError || !comment || comment.author_id !== user.id) {
+     throw new Error("غير مصرح بحذف هذا التعليق");
+   }
+ 
+-  // Delete child comments first (replies to this comment)
+-  const { data: childIds } = await supabase
+-    .from("comments")
+-    .select("id")
+-    .eq("parent_id", commentId);
+-
+-  if (childIds && childIds.length > 0) {
+-    const ids = childIds.map((c: { id: string }) => c.id);
+-    await supabase.from("comment_likes").delete().in("comment_id", ids);
+-    await supabase.from("comments").delete().in("id", ids);
+-  }
+-
+-  // Delete likes on this comment
+-  await supabase.from("comment_likes").delete().eq("comment_id", commentId);
+-
+-  // Delete the comment
+-  const { error } = await supabase
++  // Replies and likes cascade. The existing count triggers need a privileged
++  // client, created only after the authenticated ownership check above.
++  const adminClient = createAdminClient();
++  const { error } = await adminClient
+     .from("comments")
+     .delete()
+-    .eq("id", commentId);
++    .eq("id", commentId)
++    .eq("author_id", user.id)
++    .select("id")
++    .single();
+ 
+   if (error) {
+     console.error("deleteComment failed:", error);
+-    throw new Error("فشل حذف التعليق: " + error.message);
+-  }
+-
+-  // Decrement comments_count on the post
+-  const deletedCount = 1 + (childIds?.length ?? 0);
+-  // Use direct update: subtract deleted count, never go below 0
+-  const { data: currentPost } = await supabase
+-    .from("posts")
+-    .select("comments_count")
+-    .eq("id", comment.post_id)
+-    .single();
+-
+-  if (currentPost) {
+-    const newCount = Math.max(0, (currentPost.comments_count ?? 0) - deletedCount);
+-    await supabase
+-      .from("posts")
+-      .update({ comments_count: newCount })
+-      .eq("id", comment.post_id);
++    throw new Error("فشل حذف التعليق");
+   }
+ 
+   revalidatePath("/");
+@@ -74,26 +50,52 @@ export async function createComment(
+   content: string,
+   parentId: string | null
+ ) {
++  postId = requireUuid(postId, "معرّف المنشور");
++  content = requireText(content, 2000, "محتوى التعليق");
++  parentId = parentId == null ? null : requireUuid(parentId, "معرّف التعليق الأصلي");
+   // Verify user is authenticated via their session
+   const userClient = await createClient();
+   const {
+     data: { user },
++    error: authError,
+   } = await userClient.auth.getUser();
+-  if (!user) throw new Error("Not authenticated");
++  if (authError || !user) throw new Error("Not authenticated");
++
++  // Service-role inserts bypass RLS, so establish visibility with the session
++  // client first. Match the UI: approved content or the caller's own pending row.
++  const { data: post, error: postError } = await userClient
++    .from("posts")
++    .select("id, author_id, is_approved")
++    .eq("id", postId)
++    .maybeSingle();
++  if (postError || !post || post.id !== postId || (post.is_approved !== true && post.author_id !== user.id)) {
++    throw new Error("المنشور غير متاح للتعليق");
++  }
++
++  if (parentId) {
++    const { data: parent, error: parentError } = await userClient
++      .from("comments")
++      .select("id, post_id, author_id, is_approved")
++      .eq("id", parentId)
++      .eq("post_id", postId)
++      .maybeSingle();
++    if (parentError || !parent || parent.post_id !== postId || (parent.is_approved !== true && parent.author_id !== user.id)) {
++      throw new Error("التعليق الأصلي غير متاح في هذا المنشور");
++    }
++  }
+ 
+   // Use admin client for insert + settings read (bypasses RLS issues)
+   const adminClient = createAdminClient();
+ 
+   // Check auto-approve setting for comments
+-  const { data: settingsRow } = await adminClient
++  const { data: settingsRow, error: settingsError } = await adminClient
+     .from("app_settings")
+     .select("value")
+     .eq("key", "moderation")
+     .maybeSingle();
+ 
+-  const autoApprove =
+-    (settingsRow?.value as { auto_approve_comments?: boolean } | null)
+-      ?.auto_approve_comments ?? true;
++  if (settingsError) throw new Error("تعذر التحقق من إعدادات المراجعة، حاول لاحقاً");
++  const autoApprove = readAutoApprove(settingsRow?.value, "auto_approve_comments");
+ 
+   const { error } = await adminClient.from("comments").insert({
+     post_id: postId,
+@@ -105,14 +107,9 @@ export async function createComment(
+ 
+   if (error) {
+     console.error("createComment failed:", error);
+-    throw error;
+-  }
+-
+-  // Only increment visible comment count if auto-approved
+-  // If pending moderation, the count will be incremented when admin approves
+-  if (autoApprove) {
+-    await adminClient.rpc("increment_post_comments", { p_post_id: postId });
++    throw new Error("فشل نشر التعليق");
+   }
++  // The existing database INSERT trigger maintains the counter once.
+ 
+   revalidatePath("/");
+   return { success: true };
+diff --git a/src/app/actions/follows.ts b/src/app/actions/follows.ts
+index 08adf31..8531fb4 100644
+--- a/src/app/actions/follows.ts
++++ b/src/app/actions/follows.ts
+@@ -3,10 +3,12 @@
+ import { createClient } from "@/lib/supabase/server";
+ import { createAdminClient } from "@/lib/supabase/admin";
+ import { revalidatePath } from "next/cache";
++import { requireUuid } from "@/lib/input-validation";
+ 
+ export async function toggleFollow(
+   targetUserId: string
+ ): Promise<{ following: boolean }> {
++  targetUserId = requireUuid(targetUserId, "معرف المستخدم");
+   const userClient = await createClient();
+   const {
+     data: { user },
+@@ -14,20 +16,26 @@ export async function toggleFollow(
+   if (!user) throw new Error("Not authenticated");
+   if (user.id === targetUserId) throw new Error("Cannot follow yourself");
+ 
++  const { data: target, error: targetError } = await userClient
++    .from("profiles").select("id").eq("id", targetUserId).maybeSingle();
++  if (targetError || !target) throw new Error("المستخدم غير متاح");
++
+   const adminClient = createAdminClient();
+ 
+   // Check if already following
+-  const { data: existing } = await adminClient
++  const { data: existing, error: lookupError } = await adminClient
+     .from("follows")
+     .select("id")
+     .eq("follower_id", user.id)
+     .eq("following_id", targetUserId)
+     .maybeSingle();
++  if (lookupError) throw new Error("تعذر التحقق من المتابعة");
+ 
+   if (existing) {
+     // Unfollow
+-    await adminClient.from("follows").delete().eq("id", existing.id);
+-    await adminClient.rpc("decrement_follow_counts", {
++    const { data: deleted, error } = await adminClient.from("follows").delete().eq("id", existing.id).select("id");
++    if (error) throw new Error("تعذر إلغاء المتابعة");
++    if (deleted?.length) await adminClient.rpc("decrement_follow_counts", {
+       p_follower_id: user.id,
+       p_following_id: targetUserId,
+     });
+@@ -35,10 +43,11 @@ export async function toggleFollow(
+     return { following: false };
+   } else {
+     // Follow
+-    await adminClient.from("follows").insert({
++    const { error } = await adminClient.from("follows").insert({
+       follower_id: user.id,
+       following_id: targetUserId,
+     });
++    if (error) throw new Error("تعذر إضافة المتابعة");
+     await adminClient.rpc("increment_follow_counts", {
+       p_follower_id: user.id,
+       p_following_id: targetUserId,
+diff --git a/src/app/actions/likes.ts b/src/app/actions/likes.ts
+index 41d70fe..671fb5a 100644
+--- a/src/app/actions/likes.ts
++++ b/src/app/actions/likes.ts
+@@ -3,38 +3,51 @@
+ import { createClient } from "@/lib/supabase/server";
+ import { createAdminClient } from "@/lib/supabase/admin";
+ import { revalidatePath } from "next/cache";
++import { requireUuid } from "@/lib/input-validation";
++
++async function assertVisiblePost(client: Awaited<ReturnType<typeof createClient>>, postId: string) {
++  const { data, error } = await client.from("posts").select("id").eq("id", postId).eq("is_approved", true).maybeSingle();
++  if (error || !data) throw new Error("المنشور غير متاح");
++}
+ 
+ export async function togglePostLike(postId: string) {
++  postId = requireUuid(postId, "معرف المنشور");
+   const userClient = await createClient();
+   const {
+     data: { user },
+   } = await userClient.auth.getUser();
+   if (!user) throw new Error("Not authenticated");
+ 
++  await assertVisiblePost(userClient, postId);
++
+   const adminClient = createAdminClient();
+ 
+   // Check if already liked
+-  const { data: existing } = await adminClient
++  const { data: existing, error: lookupError } = await adminClient
+     .from("likes")
+     .select("id")
+     .eq("user_id", user.id)
+     .eq("target_id", postId)
+     .eq("target_type", "post")
+     .maybeSingle();
++  if (lookupError) throw new Error("تعذر التحقق من الإعجاب");
+ 
+   if (existing) {
+     // Unlike — decrement but never below 0
+-    await adminClient.from("likes").delete().eq("id", existing.id);
+-    await adminClient.rpc("decrement_post_likes", { p_post_id: postId });
++    const { data: deleted, error } = await adminClient.from("likes").delete().eq("id", existing.id).select("id");
++    if (error) throw new Error("تعذر إزالة الإعجاب");
++    if (deleted?.length) await adminClient.rpc("decrement_post_likes", { p_post_id: postId });
+     revalidatePath("/");
+     return { liked: false };
+   } else {
+     // Like — increment
+-    await adminClient.from("likes").insert({
++    const { error } = await adminClient.from("likes").insert({
+       user_id: user.id,
+       target_id: postId,
+       target_type: "post",
+     });
++    // A racing duplicate must not increment the counter after its insert fails.
++    if (error) throw new Error("تعذر إضافة الإعجاب");
+     await adminClient.rpc("increment_post_likes", { p_post_id: postId });
+     revalidatePath("/");
+     return { liked: true };
+@@ -42,33 +55,42 @@ export async function togglePostLike(postId: string) {
+ }
+ 
+ export async function toggleCommentLike(commentId: string) {
++  commentId = requireUuid(commentId, "معرف التعليق");
+   const userClient = await createClient();
+   const {
+     data: { user },
+   } = await userClient.auth.getUser();
+   if (!user) throw new Error("Not authenticated");
+ 
++  const { data: comment, error: visibilityError } = await userClient
++    .from("comments").select("id, post_id").eq("id", commentId).eq("is_approved", true).maybeSingle();
++  if (visibilityError || !comment) throw new Error("التعليق غير متاح");
++  await assertVisiblePost(userClient, comment.post_id);
++
+   const adminClient = createAdminClient();
+ 
+-  const { data: existing } = await adminClient
++  const { data: existing, error: lookupError } = await adminClient
+     .from("comment_likes")
+     .select("id")
+     .eq("user_id", user.id)
+     .eq("comment_id", commentId)
+     .maybeSingle();
++  if (lookupError) throw new Error("تعذر التحقق من الإعجاب");
+ 
+   if (existing) {
+     // Unlike — decrement but never below 0
+-    await adminClient.from("comment_likes").delete().eq("id", existing.id);
+-    await adminClient.rpc("decrement_comment_likes", { p_comment_id: commentId });
++    const { data: deleted, error } = await adminClient.from("comment_likes").delete().eq("id", existing.id).select("id");
++    if (error) throw new Error("تعذر إزالة الإعجاب");
++    if (deleted?.length) await adminClient.rpc("decrement_comment_likes", { p_comment_id: commentId });
+     revalidatePath("/");
+     return { liked: false };
+   } else {
+     // Like — increment
+-    await adminClient.from("comment_likes").insert({
++    const { error } = await adminClient.from("comment_likes").insert({
+       user_id: user.id,
+       comment_id: commentId,
+     });
++    if (error) throw new Error("تعذر إضافة الإعجاب");
+     await adminClient.rpc("increment_comment_likes", { p_comment_id: commentId });
+     revalidatePath("/");
+     return { liked: true };
+diff --git a/src/app/actions/posts.ts b/src/app/actions/posts.ts
+index ce1e57f..a58b436 100644
+--- a/src/app/actions/posts.ts
++++ b/src/app/actions/posts.ts
+@@ -3,49 +3,45 @@
+ import { createClient } from "@/lib/supabase/server";
+ import { createAdminClient } from "@/lib/supabase/admin";
+ import { revalidatePath } from "next/cache";
++import { readAutoApprove, requireRecord, requireTipResult, requireUuid, validatePostInput } from "@/lib/input-validation";
+ 
+ export async function deletePost(postId: string) {
++  postId = requireUuid(postId, "معرّف المنشور");
+   const supabase = await createClient();
+   const {
+     data: { user },
++    error: authError,
+   } = await supabase.auth.getUser();
+-  if (!user) throw new Error("Not authenticated");
++  if (authError || !user) throw new Error("Not authenticated");
+ 
+   // Verify the user is the author
+-  const { data: post } = await supabase
++  const { data: post, error: postError } = await supabase
+     .from("posts")
+     .select("author_id")
+     .eq("id", postId)
+     .single();
+ 
+-  if (!post || post.author_id !== user.id) {
++  if (postError || !post || post.author_id !== user.id) {
+     throw new Error("غير مصرح بحذف هذا المنشور");
+   }
+ 
+-  // Delete related data first (likes, comment_likes, comments)
+-  const { data: commentIds } = await supabase
+-    .from("comments")
+-    .select("id")
+-    .eq("post_id", postId);
+-
+-  if (commentIds && commentIds.length > 0) {
+-    const ids = commentIds.map((c: { id: string }) => c.id);
+-    await supabase.from("comment_likes").delete().in("comment_id", ids);
+-  }
+-
+-  await supabase.from("comments").delete().eq("post_id", postId);
+-  await supabase
++  // Ownership is verified before creating the privileged client. Existing
++  // cascade triggers need permission to update protected counters/statistics.
++  const adminClient = createAdminClient();
++  const { error: likesError } = await adminClient
+     .from("likes")
+     .delete()
+     .eq("target_id", postId)
+     .eq("target_type", "post");
++  if (likesError) throw new Error("فشل حذف المنشور");
+ 
+-  // Delete the post itself
+-  const { error } = await supabase.from("posts").delete().eq("id", postId);
++  // Comments, replies, comment likes and bookmarks are removed by FK cascades.
++  const { error } = await adminClient.from("posts").delete()
++    .eq("id", postId).eq("author_id", user.id).select("id").single();
+ 
+   if (error) {
+     console.error("deletePost failed:", error);
+-    throw new Error("فشل حذف المنشور: " + error.message);
++    throw new Error("فشل حذف المنشور");
+   }
+ 
+   revalidatePath("/");
+@@ -67,42 +63,37 @@ export async function createPost(
+     confidence: number;
+   } | null
+ ) {
++  const validated = validatePostInput(content, sport, mediaUrls, tipData);
+   // Verify user is authenticated via their session
+   const userClient = await createClient();
+   const {
+     data: { user },
++    error: authError,
+   } = await userClient.auth.getUser();
+-  if (!user) throw new Error("Not authenticated");
++  if (authError || !user) throw new Error("Not authenticated");
+ 
+   // Use admin client for insert + settings read (bypasses RLS issues)
+   const adminClient = createAdminClient();
+ 
+   // Check auto-approve setting
+-  const { data: settingsRow } = await adminClient
++  const { data: settingsRow, error: settingsError } = await adminClient
+     .from("app_settings")
+     .select("value")
+     .eq("key", "moderation")
+     .maybeSingle();
+ 
+-  const autoApprove =
+-    (settingsRow?.value as { auto_approve_posts?: boolean } | null)
+-      ?.auto_approve_posts ?? true;
++  if (settingsError) throw new Error("تعذر التحقق من إعدادات المراجعة، حاول لاحقاً");
++  const autoApprove = readAutoApprove(settingsRow?.value, "auto_approve_posts");
+ 
+   const insertData: Record<string, unknown> = {
+     author_id: user.id,
+-    content,
+-    media_urls: mediaUrls,
+-    sport: sport || null,
++    content: validated.content,
++    media_urls: validated.media_urls,
++    sport: validated.sport,
+     is_approved: autoApprove,
+   };
+ 
+-  if (tipData) {
+-    insertData.tip_data = {
+-      ...tipData,
+-      result: "pending",
+-      settled_at: null,
+-    };
+-  }
++  if (validated.tip_data) insertData.tip_data = validated.tip_data;
+ 
+   const { data, error } = await adminClient
+     .from("posts")
+@@ -112,7 +103,7 @@ export async function createPost(
+ 
+   if (error) {
+     console.error("createPost failed:", error);
+-    throw new Error("فشل نشر المنشور: " + error.message);
++    throw new Error("فشل نشر المنشور");
+   }
+ 
+   revalidatePath("/");
+@@ -123,20 +114,23 @@ export async function settleTip(
+   postId: string,
+   result: "won" | "lost" | "void"
+ ) {
++  postId = requireUuid(postId, "معرّف المنشور");
++  result = requireTipResult(result);
+   const supabase = await createClient();
+   const {
+     data: { user },
++    error: authError,
+   } = await supabase.auth.getUser();
+-  if (!user) throw new Error("Not authenticated");
++  if (authError || !user) throw new Error("Not authenticated");
+ 
+   // Verify the user is the author
+-  const { data: post } = await supabase
++  const { data: post, error: postError } = await supabase
+     .from("posts")
+     .select("author_id, tip_data")
+     .eq("id", postId)
+     .single();
+ 
+-  if (!post || post.author_id !== user.id) {
++  if (postError || !post || post.author_id !== user.id) {
+     throw new Error("غير مصرح بتعديل هذا التوقع");
+   }
+ 
+@@ -144,18 +138,24 @@ export async function settleTip(
+     throw new Error("هذا المنشور ليس توقعاً");
+   }
+ 
+-  const tipData = post.tip_data as Record<string, unknown>;
+-  tipData.result = result;
+-  tipData.settled_at = new Date().toISOString();
++  const tipData = {
++    ...requireRecord(post.tip_data, "بيانات التوقع"),
++    result,
++    settled_at: new Date().toISOString(),
++  };
+ 
+-  const { error } = await supabase
++  const adminClient = createAdminClient();
++  const { error } = await adminClient
+     .from("posts")
+     .update({ tip_data: tipData })
+-    .eq("id", postId);
++    .eq("id", postId)
++    .eq("author_id", user.id)
++    .select("id")
++    .single();
+ 
+   if (error) {
+     console.error("settleTip failed:", error);
+-    throw new Error("فشل تحديد نتيجة التوقع: " + error.message);
++    throw new Error("فشل تحديد نتيجة التوقع");
+   }
+ 
+   revalidatePath("/");
+diff --git a/src/app/actions/profile.ts b/src/app/actions/profile.ts
+index 9658685..ee734d0 100644
+--- a/src/app/actions/profile.ts
++++ b/src/app/actions/profile.ts
+@@ -2,30 +2,29 @@
+ 
+ import { createClient } from "@/lib/supabase/server";
+ import { revalidatePath } from "next/cache";
++import { validateProfileInput } from "@/lib/input-validation";
+ 
+ export async function updateProfile(data: {
+   display_name: string;
+   avatar_url: string | null;
+   cover_url: string | null;
+ }) {
++  const validated = validateProfileInput(data);
+   const supabase = await createClient();
+   const {
+     data: { user },
++    error: authError,
+   } = await supabase.auth.getUser();
+-  if (!user) throw new Error("Not authenticated");
++  if (authError || !user) throw new Error("Not authenticated");
+ 
+   const { error } = await supabase
+     .from("profiles")
+-    .update({
+-      display_name: data.display_name,
+-      avatar_url: data.avatar_url,
+-      cover_url: data.cover_url,
+-    })
++    .update(validated)
+     .eq("id", user.id);
+ 
+   if (error) {
+     console.error("updateProfile failed:", error);
+-    throw new Error("فشل تحديث الملف الشخصي: " + error.message);
++    throw new Error("فشل تحديث الملف الشخصي");
+   }
+ 
+   // Get username to revalidate profile page
+diff --git a/src/app/admin/analytics/actions.ts b/src/app/admin/analytics/actions.ts
+index da44a4d..f1e743d 100644
+--- a/src/app/admin/analytics/actions.ts
++++ b/src/app/admin/analytics/actions.ts
+@@ -190,8 +190,9 @@ const CACHE_TTL_MS = 60_000;
+ //          10 content count queries, duplicate posts/comments fetches)
+ // After:  ~9 DB queries total (1 assertAdmin, 1 fetchAllAuthUsers, 8 parallel queries)
+ 
+-async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
+-  const admin = await assertAdmin();
++async function fetchAnalyticsUncached(
++  admin: ReturnType<typeof createAdminClient>
++): Promise<AnalyticsData> {
+   const ranges = getTimeRanges();
+ 
+   // ── Parallel batch: all data in one round-trip ──
+@@ -386,11 +387,13 @@ async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
+ // ── Public API ──
+ 
+ export async function fetchAllAnalytics(force = false): Promise<AnalyticsData> {
++  // Every invocation is a public Server Action entry point, including cache hits.
++  const admin = await assertAdmin();
+   if (!force && analyticsCache && Date.now() - analyticsCache.timestamp < CACHE_TTL_MS) {
+     return analyticsCache.data;
+   }
+ 
+-  const data = await fetchAnalyticsUncached();
++  const data = await fetchAnalyticsUncached(admin);
+   analyticsCache = { data, timestamp: Date.now() };
+   return data;
+ }
+diff --git a/src/app/auth/callback/route.ts b/src/app/auth/callback/route.ts
+index 00e5c11..a85055e 100644
+--- a/src/app/auth/callback/route.ts
++++ b/src/app/auth/callback/route.ts
+@@ -1,16 +1,17 @@
+ import { NextResponse } from "next/server";
+ import { createClient } from "@/lib/supabase/server";
++import { safeAuthRedirect } from "@/lib/auth-redirect";
+ 
+ export async function GET(request: Request) {
+   const { searchParams, origin } = new URL(request.url);
+   const code = searchParams.get("code");
+-  const next = searchParams.get("next") ?? "/";
++  const next = safeAuthRedirect(origin, searchParams.get("next"));
+ 
+   if (code) {
+     const supabase = await createClient();
+     const { error } = await supabase.auth.exchangeCodeForSession(code);
+     if (!error) {
+-      return NextResponse.redirect(`${origin}${next}`);
++      return NextResponse.redirect(next);
+     }
+   }
+ 
+diff --git a/src/lib/auth-redirect.ts b/src/lib/auth-redirect.ts
+new file mode 100644
+index 0000000..6d3a4d3
+--- /dev/null
++++ b/src/lib/auth-redirect.ts
+@@ -0,0 +1,13 @@
++/** Resolve only local application paths after authentication. */
++export function safeAuthRedirect(origin: string, next: string | null): URL {
++  const fallback = new URL("/", origin);
++  if (!next || !next.startsWith("/") || next.startsWith("//") || /[\\\u0000-\u001f\u007f]/.test(next)) {
++    return fallback;
++  }
++  try {
++    const target = new URL(next, origin);
++    return target.origin === fallback.origin ? target : fallback;
++  } catch {
++    return fallback;
++  }
++}
+diff --git a/src/lib/input-validation.ts b/src/lib/input-validation.ts
+new file mode 100644
+index 0000000..1280f33
+--- /dev/null
++++ b/src/lib/input-validation.ts
+@@ -0,0 +1,196 @@
++import { SPORTS } from "@/lib/supabase/types";
++
++// These limits apply to public user actions, not administrator or ghost tools.
++const MAX_URL_LENGTH = 2048;
++const PREDICTION_TYPES = new Set([
++  "نتيجة المباراة",
++  "عدد الأهداف",
++  "كلا الفريقين يسجل",
++  "أول من يسجل",
++  "هاندي كاب",
++  "أخرى",
++]);
++
++export function requireRecord(value: unknown, label: string) {
++  if (!value || typeof value !== "object" || Array.isArray(value)) {
++    throw new Error(`${label} غير صالح`);
++  }
++  return value as Record<string, unknown>;
++}
++
++export function requireText(
++  value: unknown,
++  maxLength: number,
++  label: string,
++  allowEmpty = false
++): string {
++  if (
++    typeof value !== "string" ||
++    value.length > maxLength ||
++    value.includes("\0")
++  ) {
++    throw new Error(`${label} غير صالح أو يتجاوز الحد المسموح`);
++  }
++  const text = value.trim();
++  if (!allowEmpty && !text) throw new Error(`${label} مطلوب`);
++  return text;
++}
++
++export function requireUuid(value: unknown, label = "المعرّف"): string {
++  if (
++    typeof value !== "string" ||
++    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
++  ) {
++    throw new Error(`${label} غير صالح`);
++  }
++  return value.toLowerCase();
++}
++
++export function requireWebUrl(value: unknown, label: string): string {
++  const text = requireText(value, MAX_URL_LENGTH, label);
++  if (!/^https?:\/\//i.test(text) || /[\s\u0000-\u001f\u007f\\]/.test(text)) {
++    throw new Error(`${label} غير صالح`);
++  }
++  let url: URL;
++  try {
++    url = new URL(text);
++  } catch {
++    throw new Error(`${label} غير صالح`);
++  }
++  if (
++    !["http:", "https:"].includes(url.protocol) ||
++    !url.hostname ||
++    url.username ||
++    url.password
++  ) {
++    throw new Error(`${label} غير صالح`);
++  }
++  return text;
++}
++
++export function optionalWebUrl(value: unknown, label: string): string | null {
++  if (value === null || value === undefined || value === "") return null;
++  return requireWebUrl(value, label);
++}
++
++function requirePagePath(value: unknown, label: string): string {
++  const path = requireText(value, MAX_URL_LENGTH, label);
++  if (!path.startsWith("/") || path.startsWith("//") || /[\s\\\u0000-\u001f\u007f]/.test(path)) {
++    throw new Error(`${label} غير صالح`);
++  }
++  return path;
++}
++
++function optionalText(value: unknown, maxLength: number, label: string) {
++  if (value === undefined || value === null || value === "") return null;
++  const text = requireText(value, maxLength, label, true);
++  if (/[\u0000-\u001f\u007f]/.test(text)) throw new Error(`${label} غير صالح`);
++  return text || null;
++}
++
++function requireMatchDate(value: unknown) {
++  const date = requireText(value, 40, "تاريخ المباراة");
++  const parts = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})?$/.exec(date);
++  if (!parts) throw new Error("تاريخ المباراة غير صالح");
++  const [, year, month, day, hour, minute, second = "0"] = parts;
++  const daysInMonth = new Date(Date.UTC(Number(year), Number(month), 0)).getUTCDate();
++  if (
++    Number(month) < 1 || Number(month) > 12 ||
++    Number(day) < 1 || Number(day) > daysInMonth ||
++    Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59 ||
++    !Number.isFinite(Date.parse(date))
++  ) {
++    throw new Error("تاريخ المباراة غير صالح");
++  }
++  // Keep datetime-local inputs in their original form, as the existing UI expects.
++  return date;
++}
++
++function validateTipInput(value: unknown) {
++  const tip = requireRecord(value, "بيانات التوقع");
++  const predictionType = requireText(tip.prediction_type, 50, "نوع التوقع");
++  if (!PREDICTION_TYPES.has(predictionType)) throw new Error("نوع التوقع غير صالح");
++  if (typeof tip.odds !== "number" || !Number.isFinite(tip.odds) || tip.odds < 1) {
++    throw new Error("الأوديز غير صالحة");
++  }
++  if (typeof tip.confidence !== "number" || !Number.isInteger(tip.confidence) || tip.confidence < 1 || tip.confidence > 5) {
++    throw new Error("مستوى الثقة غير صالح");
++  }
++  // Project only supported fields: callers cannot persist arbitrary JSON keys.
++  return {
++    match_home: requireText(tip.match_home, 150, "الفريق المضيف"),
++    match_away: requireText(tip.match_away, 150, "الفريق الضيف"),
++    league: requireText(tip.league, 150, "الدوري"),
++    match_date: requireMatchDate(tip.match_date),
++    prediction: requireText(tip.prediction, 500, "التوقع"),
++    prediction_type: predictionType,
++    odds: tip.odds,
++    confidence: tip.confidence,
++    result: "pending" as const,
++    settled_at: null,
++  };
++}
++
++export function validatePostInput(content: unknown, sport: unknown, mediaUrls: unknown, tipData: unknown) {
++  const text = requireText(content, 500, "محتوى المنشور", true);
++  let validatedSport: string | null = null;
++  if (sport !== null && sport !== undefined && sport !== "") {
++    validatedSport = requireText(sport, 30, "الرياضة");
++    if (!SPORTS.some((item) => item.value === validatedSport)) throw new Error("الرياضة غير صالحة");
++  }
++  let media: string[] | null = null;
++  if (mediaUrls !== null && mediaUrls !== undefined) {
++    // The public composer supports a single uploaded image.
++    if (!Array.isArray(mediaUrls) || mediaUrls.length > 1) throw new Error("صور المنشور غير صالحة");
++    media = mediaUrls.map((url) => requireWebUrl(url, "رابط الصورة"));
++    if (!media.length) media = null;
++  }
++  const tip = tipData === null || tipData === undefined ? null : validateTipInput(tipData);
++  if (!text && !media?.length && !tip) throw new Error("المنشور فارغ");
++  return { content: text, sport: validatedSport, media_urls: media, tip_data: tip };
++}
++
++export function requireTipResult(value: unknown): "won" | "lost" | "void" {
++  if (value !== "won" && value !== "lost" && value !== "void") throw new Error("نتيجة التوقع غير صالحة");
++  return value;
++}
++
++export function readAutoApprove(value: unknown, key: "auto_approve_posts" | "auto_approve_comments") {
++  return !!value && typeof value === "object" && !Array.isArray(value) && (value as Record<string, unknown>)[key] === true;
++}
++
++export function validateProfileInput(value: unknown) {
++  const data = requireRecord(value, "بيانات الملف الشخصي");
++  const displayName = requireText(data.display_name, 50, "الاسم");
++  if (/[\u0000-\u001f\u007f]/.test(displayName)) throw new Error("الاسم غير صالح");
++  return {
++    display_name: displayName,
++    avatar_url: optionalWebUrl(data.avatar_url, "رابط الصورة الشخصية"),
++    cover_url: optionalWebUrl(data.cover_url, "رابط صورة الغلاف"),
++  };
++}
++
++export function validateLinkClickInput(value: unknown) {
++  const data = requireRecord(value, "بيانات الزيارة");
++  const linkType = optionalText(data.link_type, 30, "نوع الرابط");
++  if (linkType !== null && linkType !== "external" && linkType !== "internal") throw new Error("نوع الرابط غير صالح");
++  return {
++    target_url: requireWebUrl(data.target_url, "الرابط"),
++    link_type: linkType,
++    source_page: data.source_page == null || data.source_page === "" ? null : requirePagePath(data.source_page, "صفحة المصدر"),
++    user_agent: optionalText(data.user_agent, 512, "بيانات المتصفح"),
++    referrer: optionalWebUrl(data.referrer, "رابط الإحالة"),
++  };
++}
++
++export function validatePageViewInput(value: unknown) {
++  const data = requireRecord(value, "بيانات الزيارة");
++  return {
++    page_url: requirePagePath(data.page_url, "الصفحة"),
++    referrer: optionalWebUrl(data.referrer, "رابط الإحالة"),
++    user_agent: optionalText(data.user_agent, 512, "بيانات المتصفح"),
++    utm_source: optionalText(data.utm_source, 256, "مصدر الحملة"),
++    utm_medium: optionalText(data.utm_medium, 256, "وسيط الحملة"),
++    utm_campaign: optionalText(data.utm_campaign, 256, "اسم الحملة"),
++  };
++}
+diff --git a/src/lib/supabase/admin.ts b/src/lib/supabase/admin.ts
+index 745ca70..5eeb6a9 100644
+--- a/src/lib/supabase/admin.ts
++++ b/src/lib/supabase/admin.ts
+@@ -16,3 +16,4 @@ export function createAdminClient() {
+     auth: { persistSession: false, autoRefreshToken: false },
+   });
+ }
++import "server-only";
+diff --git a/src/middleware.ts b/src/proxy.ts
+similarity index 66%
+rename from src/middleware.ts
+rename to src/proxy.ts
+index 355f0ff..12868fd 100644
+--- a/src/middleware.ts
++++ b/src/proxy.ts
+@@ -1,8 +1,9 @@
+ import { createServerClient } from "@supabase/ssr";
+ import { NextResponse, type NextRequest } from "next/server";
+ 
+-export async function middleware(request: NextRequest) {
++export async function proxy(request: NextRequest) {
+   let supabaseResponse = NextResponse.next({ request });
++
+   const supabase = createServerClient(
+     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+@@ -11,7 +12,7 @@ export async function middleware(request: NextRequest) {
+         getAll() {
+           return request.cookies.getAll();
+         },
+-        setAll(cookiesToSet) {
++        setAll(cookiesToSet, headers) {
+           cookiesToSet.forEach(({ name, value }) =>
+             request.cookies.set(name, value)
+           );
+@@ -19,6 +20,9 @@ export async function middleware(request: NextRequest) {
+           cookiesToSet.forEach(({ name, value, options }) =>
+             supabaseResponse.cookies.set(name, value, options)
+           );
++          Object.entries(headers).forEach(([name, value]) =>
++            supabaseResponse.headers.set(name, value)
++          );
+         },
+       },
+     }
+@@ -29,6 +33,11 @@ export async function middleware(request: NextRequest) {
+     data: { user },
+   } = await supabase.auth.getUser();
+ 
++  // Sessions and private pages must never be shared by a reverse-proxy cache.
++  if (user || request.nextUrl.pathname.startsWith("/auth/") || request.nextUrl.pathname.startsWith("/admin")) {
++    supabaseResponse.headers.set("Cache-Control", "private, no-store, max-age=0");
++  }
++
+   // PUBLIC routes — accessible without login
+   const publicPaths = [
+     "/",
+@@ -51,7 +60,14 @@ export async function middleware(request: NextRequest) {
+   if (!user && !isPublic) {
+     const url = request.nextUrl.clone();
+     url.pathname = "/auth/login";
+-    return NextResponse.redirect(url);
++    const response = NextResponse.redirect(url);
++    supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
++    for (const name of ["cache-control", "expires", "pragma"]) {
++      const value = supabaseResponse.headers.get(name);
++      if (value) response.headers.set(name, value);
++    }
++    response.headers.set("Cache-Control", "private, no-store, max-age=0");
++    return response;
+   }
+ 
+   return supabaseResponse;
+diff --git a/tests/actions-security.test.cjs b/tests/actions-security.test.cjs
+new file mode 100644
+index 0000000..a32c0ba
+--- /dev/null
++++ b/tests/actions-security.test.cjs
+@@ -0,0 +1,280 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++const path = require("node:path");
++const ts = require("typescript");
++
++function loadSource(relativePath, mocks = {}) {
++  const filename = path.join(__dirname, "..", relativePath);
++  const source = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
++    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
++    fileName: filename,
++  }).outputText;
++  const testModule = { exports: {} };
++  new Function("require", "module", "exports", source)(
++    (name) => Object.hasOwn(mocks, name) ? mocks[name] : require(name), testModule, testModule.exports
++  );
++  return testModule.exports;
++}
++
++const validation = loadSource("src/lib/input-validation.ts", {
++  "@/lib/supabase/types": loadSource("src/lib/supabase/types.ts"),
++});
++const USER = "10000000-0000-4000-8000-000000000001";
++const OTHER_USER = "10000000-0000-4000-8000-000000000002";
++const POST = "20000000-0000-4000-8000-000000000001";
++const OTHER_POST = "20000000-0000-4000-8000-000000000002";
++const COMMENT = "30000000-0000-4000-8000-000000000001";
++const tip = {
++  match_home: "الفريق الأول", match_away: "الفريق الثاني", league: "الدوري",
++  match_date: "2026-10-06T20:00", prediction: "الفريق الأول",
++  prediction_type: "نتيجة المباراة", odds: 1.5, confidence: 3,
++};
++
++// The mocked clients distinguish the session-bound reads from privileged writes.
++// No test connects to the deployed database.
++function environment(results = {}, user = { id: USER }, authError = null) {
++  const queues = Object.fromEntries(Object.entries(results).map(([key, value]) => [key, [...value]]));
++  const calls = [];
++  let adminCreated = 0;
++  let authCalls = 0;
++  function client(kind) {
++    return {
++      auth: { getUser: async () => { authCalls++; return { data: { user }, error: authError }; } },
++      rpc: () => { throw new Error("Unexpected redundant counter RPC"); },
++      from(table) {
++        const operations = [];
++        function run() {
++          calls.push({ client: kind, table, operations });
++          return queues[`${kind}:${table}`]?.shift() ?? { data: null, error: null };
++        }
++        const query = {};
++        for (const method of ["select", "eq", "insert", "update", "delete", "in"]) {
++          query[method] = (...args) => { operations.push([method, ...args]); return query; };
++        }
++        query.single = query.maybeSingle = async () => run();
++        query.then = (resolve, reject) => Promise.resolve(run()).then(resolve, reject);
++        return query;
++      },
++    };
++  }
++  const userClient = client("user");
++  const adminClient = client("admin");
++  return {
++    calls,
++    get adminCreated() { return adminCreated; },
++    get authCalls() { return authCalls; },
++    load(name) {
++      return loadSource(`src/app/actions/${name}.ts`, {
++        "@/lib/input-validation": validation,
++        "@/lib/supabase/server": { createClient: async () => userClient },
++        "@/lib/supabase/admin": { createAdminClient: () => { adminCreated++; return adminClient; } },
++        "next/cache": { revalidatePath: () => {} },
++      });
++    },
++  };
++}
++const ok = (data) => ({ data, error: null });
++const inserted = (env, table) => env.calls.find((call) => call.table === table && call.operations.some(([op]) => op === "insert"))?.operations.find(([op]) => op === "insert")[1];
++const writes = (env) => env.calls.filter((call) => call.operations.some(([op]) => ["insert", "update", "delete"].includes(op)));
++
++test("public post input rejects forged oversized and malformed payloads before DB access", async () => {
++  const env = environment();
++  const { createPost } = env.load("posts");
++  const payloads = [
++    ["x".repeat(501), null, null, null],
++    ["", null, null, null],
++    ["post", { sport: "football" }, null, null],
++    ["post", "unknown", null, null],
++    ["post", null, ["javascript:alert(1)"], null],
++    ["post", null, ["https://example.test/a", "https://example.test/b"], null],
++    ["post", null, ["https://user:password@example.test/a"], null],
++    ["post", null, null, { ...tip, odds: NaN }],
++    ["post", null, null, { ...tip, odds: Infinity }],
++    ["post", null, null, { ...tip, odds: "1.5" }],
++    ["post", null, null, { ...tip, confidence: 6 }],
++    ["post", null, null, { ...tip, confidence: 2.5 }],
++    ["post", null, null, { ...tip, prediction_type: "injected" }],
++    ["post", null, null, { ...tip, match_date: "2026-02-31T20:00" }],
++  ];
++  for (const payload of payloads) await assert.rejects(createPost(...payload));
++  assert.equal(env.authCalls, 0);
++  assert.equal(env.adminCreated, 0);
++  assert.equal(writes(env).length, 0);
++});
++
++test("normal post limits work and tip JSON cannot overwrite approval, ownership or results", async () => {
++  const env = environment({
++    "admin:app_settings": [ok({ value: { auto_approve_posts: true } })],
++    "admin:posts": [ok({ id: POST })],
++  });
++  const result = await env.load("posts").createPost("x".repeat(500), "football", null, {
++    ...tip, author_id: OTHER_USER, is_approved: true, arbitrary: "injected",
++    result: "won", settled_at: "forged",
++  });
++  const row = inserted(env, "posts");
++  assert.equal(result.id, POST);
++  assert.equal(row.content.length, 500);
++  assert.equal(row.author_id, USER);
++  assert.equal(row.tip_data.result, "pending");
++  assert.equal(row.tip_data.settled_at, null);
++  assert.equal(row.tip_data.arbitrary, undefined);
++  assert.equal(row.tip_data.author_id, undefined);
++  assert.equal(row.tip_data.is_approved, undefined);
++});
++
++test("moderation read failure blocks post/comment writes; missing settings stay pending", async () => {
++  const failed = { data: null, error: { message: "settings unavailable" } };
++  const postEnv = environment({ "admin:app_settings": [failed] });
++  await assert.rejects(postEnv.load("posts").createPost("post", null, null, null));
++  assert.equal(writes(postEnv).length, 0);
++  const commentEnv = environment({
++    "user:posts": [ok({ id: POST, is_approved: true, author_id: OTHER_USER })],
++    "admin:app_settings": [failed],
++  });
++  await assert.rejects(commentEnv.load("comments").createComment(POST, "comment", null));
++  assert.equal(writes(commentEnv).length, 0);
++  const missingEnv = environment({ "admin:app_settings": [ok(null)], "admin:posts": [ok({ id: POST })] });
++  await missingEnv.load("posts").createPost("post", null, null, null);
++  assert.equal(inserted(missingEnv, "posts").is_approved, false);
++  assert.equal(validation.readAutoApprove({ auto_approve_posts: "true" }, "auto_approve_posts"), false);
++});
++
++test("comments cannot target hidden/unreadable posts or parents from another post", async () => {
++  for (const postResult of [
++    ok(null), { data: null, error: { message: "RLS read failed" } },
++    ok({ id: POST, is_approved: false, author_id: OTHER_USER }),
++  ]) {
++    const env = environment({ "user:posts": [postResult] });
++    await assert.rejects(env.load("comments").createComment(POST, "comment", null));
++    assert.equal(env.adminCreated, 0);
++    assert.equal(writes(env).length, 0);
++  }
++  for (const parentResult of [
++    ok({ id: COMMENT, post_id: OTHER_POST, author_id: OTHER_USER, is_approved: true }),
++    ok({ id: COMMENT, post_id: POST, author_id: OTHER_USER, is_approved: false }),
++  ]) {
++    const env = environment({
++      "user:posts": [ok({ id: POST, author_id: OTHER_USER, is_approved: true })],
++      "user:comments": [parentResult],
++    });
++    await assert.rejects(env.load("comments").createComment(POST, "comment", COMMENT));
++    assert.equal(env.adminCreated, 0);
++    assert.equal(writes(env).length, 0);
++  }
++});
++
++test("visible same-post replies use session checks before one privileged insert", async () => {
++  const env = environment({
++    "user:posts": [ok({ id: POST, author_id: USER, is_approved: false })],
++    "user:comments": [ok({ id: COMMENT, post_id: POST, author_id: USER, is_approved: false })],
++    "admin:app_settings": [ok({ value: { auto_approve_comments: false } })],
++  });
++  await env.load("comments").createComment(POST, " comment ", COMMENT);
++  const row = inserted(env, "comments");
++  assert.equal(row.content, "comment");
++  assert.equal(row.parent_id, COMMENT);
++  assert.equal(row.is_approved, false);
++  assert.equal(writes(env).length, 1);
++  const parentRead = env.calls.find((call) => call.client === "user" && call.table === "comments");
++  assert.ok(parentRead.operations.some(([op, column, value]) => op === "eq" && column === "post_id" && value === POST));
++});
++
++test("owner deletes reject strangers before constructing any privileged client", async () => {
++  for (const [file, method, table, id] of [
++    ["posts", "deletePost", "posts", POST],
++    ["comments", "deleteComment", "comments", COMMENT],
++  ]) {
++    const env = environment({ [`user:${table}`]: [ok({ author_id: OTHER_USER })] });
++    await assert.rejects(env.load(file)[method](id));
++    assert.equal(env.adminCreated, 0);
++    assert.equal(writes(env).length, 0);
++    const ownerEnv = environment({ [`user:${table}`]: [ok({ author_id: USER })], [`admin:${table}`]: [ok({ id })] });
++    await ownerEnv.load(file)[method](id);
++    const deletion = writes(ownerEnv).find((call) => call.table === table);
++    assert.equal(deletion.client, "admin");
++    assert.ok(deletion.operations.some(([op, column, value]) => op === "eq" && column === "author_id" && value === USER));
++    assert.ok(!writes(ownerEnv).some((call) => call.operations.some(([op]) => op === "update")), "count triggers handle deletion without public counter updates");
++  }
++});
++
++test("authentication errors fail closed before protected reads or privileged writes", async () => {
++  const env = environment({}, { id: USER }, { message: "verification failed" });
++  await assert.rejects(env.load("posts").createPost("post", null, null, null));
++  await assert.rejects(env.load("posts").deletePost(POST));
++  await assert.rejects(env.load("posts").settleTip(POST, "won"));
++  await assert.rejects(env.load("comments").createComment(POST, "comment", null));
++  await assert.rejects(env.load("comments").deleteComment(COMMENT));
++  await assert.rejects(env.load("profile").updateProfile({ display_name: "name", avatar_url: null, cover_url: null }));
++  assert.equal(env.calls.length, 0);
++  assert.equal(env.adminCreated, 0);
++});
++
++test("tip settlement requires ownership before privilege and accepts the supported results", async () => {
++  const strangerEnv = environment({ "user:posts": [ok({ author_id: OTHER_USER, tip_data: tip })] });
++  await assert.rejects(strangerEnv.load("posts").settleTip(POST, "won"));
++  assert.equal(strangerEnv.adminCreated, 0);
++  assert.equal(writes(strangerEnv).length, 0);
++  for (const result of ["won", "lost", "void"]) {
++    const env = environment({
++      "user:posts": [ok({ author_id: USER, tip_data: { ...tip, result: "pending", settled_at: null } })],
++      "admin:posts": [ok({ id: POST })],
++    });
++    await env.load("posts").settleTip(POST, result);
++    const update = writes(env)[0];
++    assert.equal(update.client, "admin");
++    assert.ok(update.operations.some(([op, column, value]) => op === "eq" && column === "author_id" && value === USER));
++    const row = update.operations.find(([op]) => op === "update")[1];
++    assert.equal(row.tip_data.result, result);
++    assert.ok(Number.isFinite(Date.parse(row.tip_data.settled_at)));
++    assert.equal(row.tip_data.prediction, tip.prediction);
++  }
++});
++
++test("UUIDs, comments and settlement enums are runtime checked before DB access", async () => {
++  const env = environment();
++  await assert.rejects(env.load("posts").deletePost("not-a-uuid"));
++  await assert.rejects(env.load("comments").deleteComment("not-a-uuid"));
++  await assert.rejects(env.load("comments").createComment(POST, "x".repeat(2001), null));
++  await assert.rejects(env.load("comments").createComment(POST, "comment", "not-a-uuid"));
++  await assert.rejects(env.load("posts").settleTip(POST, "approved"));
++  assert.equal(env.authCalls, 0);
++  assert.equal(writes(env).length, 0);
++});
++
++test("profile updates enforce normal 50-character names and safe media URLs", async () => {
++  const env = environment();
++  const { updateProfile } = env.load("profile");
++  await assert.rejects(updateProfile({ display_name: "x".repeat(51), avatar_url: null, cover_url: null }));
++  await assert.rejects(updateProfile({ display_name: "name", avatar_url: "data:image/svg+xml,injected", cover_url: null }));
++  assert.equal(env.authCalls, 0);
++  await updateProfile({ display_name: "x".repeat(50), avatar_url: "https://example.test/avatar.png", cover_url: null, role: "admin", stats: {} });
++  const row = env.calls.find((call) => call.operations.some(([op]) => op === "update")).operations.find(([op]) => op === "update")[1];
++  assert.equal(row.display_name.length, 50);
++  assert.equal(row.role, undefined);
++  assert.equal(row.stats, undefined);
++});
++
++test("anonymous analytics reject huge strings, arbitrary schemes and forged page-view types", async () => {
++  const env = environment({}, null);
++  const { trackLinkClick, trackPageView } = env.load("clicks");
++  for (const payload of [
++    { target_url: "javascript:alert(1)" },
++    { target_url: "https://example.test", user_agent: "x".repeat(513) },
++    { target_url: "https://example.test", link_type: "page_view" },
++  ]) await assert.rejects(trackLinkClick(payload));
++  for (const payload of [
++    { page_url: "//evil.example" },
++    { page_url: "/", utm_campaign: "x".repeat(257) },
++    { page_url: "/", referrer: "https://example.test/" + "x".repeat(2048) },
++  ]) await assert.rejects(trackPageView(payload));
++  assert.equal(env.authCalls, 0);
++  assert.equal(env.adminCreated, 0);
++  await trackPageView({ page_url: "/profile/edit", user_agent: "browser", utm_source: "campaign" });
++  const row = inserted(env, "link_clicks");
++  assert.equal(row.target_url, "/profile/edit");
++  assert.equal(row.referrer, "campaign");
++  assert.equal(row.user_id, null);
++  assert.match(row.session_id, /^anon-/);
++  assert.equal(writes(env).length, 1);
++});
+diff --git a/tests/auth-security.test.cjs b/tests/auth-security.test.cjs
+new file mode 100644
+index 0000000..f4e5a9d
+--- /dev/null
++++ b/tests/auth-security.test.cjs
+@@ -0,0 +1,130 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++const path = require("node:path");
++const ts = require("typescript");
++const { NextRequest } = require("next/server");
++
++function loadSource(relativePath, mocks = {}) {
++  const filename = path.join(__dirname, "..", relativePath);
++  const source = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
++    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
++    fileName: filename,
++  }).outputText;
++  const testModule = { exports: {} };
++  new Function("require", "module", "exports", source)(
++    (name) => Object.hasOwn(mocks, name) ? mocks[name] : require(name), testModule, testModule.exports
++  );
++  return testModule.exports;
++}
++
++test("auth callback accepts local paths and rejects authority/host injection", () => {
++  const { safeAuthRedirect } = loadSource("src/lib/auth-redirect.ts");
++  const origin = "https://arabtips.com";
++  for (const next of [null, "@evil.example/", ".evil.example", "https://evil.example/", "//evil.example/", "/\\evil.example/", "/\n/evil.example/"]) {
++    assert.equal(safeAuthRedirect(origin, next).href, `${origin}/`);
++  }
++  assert.equal(safeAuthRedirect(origin, "/profile/edit?tab=avatar#form").href, `${origin}/profile/edit?tab=avatar#form`);
++});
++
++test("analytics requires admin authorization even when its cache is warm", async () => {
++  let user = { id: "admin", email: "uomankotd@gmail.com" };
++  let queryCount = 0;
++  function query() {
++    queryCount++;
++    const chain = new Proxy({}, {
++      get(_target, property) {
++        if (property === "then") return (resolve) => resolve({ data: [], count: 0, error: null });
++        return () => chain;
++      },
++    });
++    return chain;
++  }
++  const admin = { from: query, rpc: query };
++  const actions = loadSource("src/app/admin/analytics/actions.ts", {
++    "@/lib/supabase/server": { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) } }) },
++    "@/lib/supabase/admin": { createAdminClient: () => admin },
++  });
++  const first = await actions.fetchAllAnalytics();
++  const queriesAfterWarm = queryCount;
++  assert.equal((await actions.fetchAllAnalytics()), first);
++  assert.equal(queryCount, queriesAfterWarm, "admin cache hit should avoid DB queries");
++  user = null;
++  await assert.rejects(actions.fetchAllAnalytics(), /Unauthorized/);
++  await assert.rejects(actions.fetchAllAnalytics(true), /Unauthorized/);
++  user = { id: "ordinary", email: "ordinary@example.test" };
++  await assert.rejects(actions.fetchAllAnalytics(), /Unauthorized/);
++  assert.equal(queryCount, queriesAfterWarm, "unauthorized callers must not query privileged data");
++});
++
++test("proxy forwards refresh cookies and no-cache headers onto protected redirects", async () => {
++  const { proxy } = loadSource("src/proxy.ts", {
++    "@supabase/ssr": {
++      createServerClient: (_url, _key, options) => ({
++        auth: { getUser: async () => {
++          options.cookies.setAll([{ name: "test-session", value: "refreshed", options: { path: "/", sameSite: "lax" } }], {
++            "Cache-Control": "private, no-cache, no-store",
++            Expires: "0",
++            Pragma: "no-cache",
++          });
++          return { data: { user: null } };
++        } },
++      }),
++    },
++  });
++  const response = await proxy(new NextRequest("https://arabtips.com/profile/edit"));
++  assert.equal(response.status, 307);
++  assert.equal(response.headers.get("location"), "https://arabtips.com/auth/login");
++  assert.equal(response.cookies.get("test-session").value, "refreshed");
++  assert.match(response.headers.get("cache-control"), /no-store/);
++  assert.equal(response.headers.get("expires"), "0");
++  assert.equal(response.headers.get("pragma"), "no-cache");
++});
++
++test("verified sessions are never sent as shared cacheable responses", async () => {
++  const { proxy } = loadSource("src/proxy.ts", {
++    "@supabase/ssr": { createServerClient: () => ({ auth: { getUser: async () => ({ data: { user: { id: "ordinary" } } }) } }) },
++  });
++  const response = await proxy(new NextRequest("https://arabtips.com/"));
++  assert.match(response.headers.get("cache-control"), /private.*no-store/);
++});
++
++test("production landing pages stay public while private routes require login", async () => {
++  const { proxy, config } = loadSource("src/proxy.ts", {
++    "@supabase/ssr": { createServerClient: () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }) },
++  });
++  const { unstable_doesMiddlewareMatch } = require("next/experimental/testing/server");
++  for (const pathname of ["/1xbet", "/1xbet/promo-code", "/pariland", "/pariland/bonus", "/go/1xbet", "/eg", "/eg/1xbet", "/about", "/about/team"]) {
++    const response = await proxy(new NextRequest(`https://arabtips.com${pathname}`));
++    assert.equal(response.status, 200, `public page ${pathname}`);
++    assert.equal(response.headers.get("location"), null);
++  }
++  for (const pathname of ["/admin", "/admin/settings", "/profile/edit", "/create"]) {
++    const response = await proxy(new NextRequest(`https://arabtips.com${pathname}`));
++    assert.equal(response.status, 307, `protected page ${pathname}`);
++    assert.equal(response.headers.get("location"), "https://arabtips.com/auth/login");
++  }
++  for (const pathname of ["/robots.txt", "/sitemap.xml"]) {
++    assert.equal(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: pathname }), false, `public crawler asset ${pathname}`);
++  }
++  assert.equal(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: "/admin" }), true);
++});
++
++test("production sends anti-embedding, MIME and HTTPS headers", async () => {
++  const previous = process.env.NODE_ENV;
++  process.env.NODE_ENV = "production";
++  try {
++    const config = loadSource("next.config.ts").default;
++    const [{ headers }] = await config.headers();
++    const values = Object.fromEntries(headers.map(({ key, value }) => [key.toLowerCase(), value]));
++    assert.equal(config.poweredByHeader, false);
++    assert.equal(values["x-frame-options"], "DENY");
++    assert.equal(values["x-content-type-options"], "nosniff");
++    assert.match(values["content-security-policy"], /frame-ancestors 'none'/);
++    assert.match(values["strict-transport-security"], /max-age=31536000/);
++    assert.doesNotMatch(values["strict-transport-security"], /includeSubDomains|preload/);
++  } finally {
++    if (previous === undefined) delete process.env.NODE_ENV;
++    else process.env.NODE_ENV = previous;
++  }
++});
+diff --git a/tests/interactions-security.test.cjs b/tests/interactions-security.test.cjs
+new file mode 100644
+index 0000000..7dbb21a
+--- /dev/null
++++ b/tests/interactions-security.test.cjs
+@@ -0,0 +1,91 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++const path = require("node:path");
++const ts = require("typescript");
++
++function loadSource(relativePath, mocks = {}) {
++  const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, "..", relativePath), "utf8"), {
++    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
++  }).outputText;
++  const testModule = { exports: {} };
++  new Function("require", "module", "exports", source)((name) => {
++    if (Object.hasOwn(mocks, name)) return mocks[name];
++    if (name.startsWith("@/lib/")) return loadSource(`src/${name.slice(2)}.ts`);
++    return require(name);
++  }, testModule, testModule.exports);
++  return testModule.exports;
++}
++
++const targetId = "11111111-1111-4111-8111-111111111111";
++
++function setup(file, { visible = true, insertError = null, existing = null, deleted = [] } = {}) {
++  let privilegedClients = 0;
++  let rpcCalls = 0;
++  let writes = 0;
++  function query(result, privileged = false) {
++    const chain = new Proxy({}, { get(_target, key) {
++      if (key === "then") return (resolve) => resolve(result);
++      if (key === "maybeSingle") return async () => result;
++      if (["insert", "delete"].includes(key)) return () => {
++        if (privileged) writes++;
++        return chain;
++      };
++      return () => chain;
++    } });
++    return chain;
++  }
++  const user = { id: "22222222-2222-4222-8222-222222222222" };
++  const client = {
++    auth: { getUser: async () => ({ data: { user } }) },
++    from: () => query({ data: visible ? { id: targetId, post_id: targetId } : null, error: null }),
++  };
++  const admin = {
++    from: () => {
++      const chain = new Proxy({}, { get(_target, key) {
++        if (key === "then") return (resolve) => resolve({ data: deleted, error: insertError });
++        if (key === "maybeSingle") return async () => ({ data: existing, error: null });
++        if (["insert", "delete"].includes(key)) return () => { writes++; return chain; };
++        return () => chain;
++      } });
++      return chain;
++    },
++    rpc: async () => { rpcCalls++; return { error: null }; },
++  };
++  const actions = loadSource(file, {
++    "@/lib/supabase/server": { createClient: async () => client },
++    "@/lib/supabase/admin": { createAdminClient: () => { privilegedClients++; return admin; } },
++    "next/cache": { revalidatePath: () => {} },
++  });
++  return { actions, metrics: () => ({ privilegedClients, rpcCalls, writes }) };
++}
++
++for (const [file, action] of [
++  ["src/app/actions/likes.ts", "togglePostLike"],
++  ["src/app/actions/likes.ts", "toggleCommentLike"],
++  ["src/app/actions/follows.ts", "toggleFollow"],
++]) {
++  test(`${action}: invisible targets do not reach privileged writes`, async () => {
++    const { actions, metrics } = setup(file, { visible: false });
++    await assert.rejects(actions[action](targetId));
++    assert.deepEqual(metrics(), { privilegedClients: 0, rpcCalls: 0, writes: 0 });
++  });
++  test(`${action}: failed or duplicate inserts cannot inflate counters`, async () => {
++    const { actions, metrics } = setup(file, { insertError: { code: "23505" } });
++    await assert.rejects(actions[action](targetId));
++    assert.equal(metrics().writes, 1);
++    assert.equal(metrics().rpcCalls, 0);
++  });
++  test(`${action}: concurrent removal of an already-deleted row does not decrement counters`, async () => {
++    const { actions, metrics } = setup(file, { existing: { id: targetId }, deleted: [] });
++    await actions[action](targetId);
++    assert.equal(metrics().writes, 1);
++    assert.equal(metrics().rpcCalls, 0);
++  });
++  test(`${action}: valid public interaction retains its counter update`, async () => {
++    const { actions, metrics } = setup(file);
++    await actions[action](targetId);
++    assert.equal(metrics().writes, 1);
++    assert.equal(metrics().rpcCalls, 1);
++  });
++}

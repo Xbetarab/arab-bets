@@ -1,0 +1,313 @@
+diff --git a/public/robots.txt b/public/robots.txt
+--- a/public/robots.txt
++++ b/public/robots.txt
+@@ -1,7 +1,6 @@
+ User-agent: *
+ Allow: /
+ Disallow: /api/
+-Disallow: /_next/
+ Disallow: /admin/
+ Disallow: /auth/
+ 
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -14,6 +14,7 @@
+ });
+ 
+ export const metadata: Metadata = {
++  metadataBase: new URL("https://arabtips.com"),
+   title: "arabtips | مجتمع المراهنين العرب",
+   description: "المنصة الاجتماعية لمجتمع المراهنين العرب",
+   manifest: "/manifest.json",
+diff --git a/src/app/(main)/page.tsx b/src/app/(main)/page.tsx
+--- a/src/app/(main)/page.tsx
++++ b/src/app/(main)/page.tsx
+@@ -1,5 +1,12 @@
+ import { createClient } from "@/lib/supabase/server";
++import { fetchFeedPage } from "@/app/actions/feed";
+ import Feed from "@/components/feed";
++import Link from "next/link";
++import type { Metadata } from "next";
++
++export const metadata: Metadata = {
++  alternates: { canonical: "https://arabtips.com/" },
++};
+ 
+ export default async function HomePage() {
+   const supabase = await createClient();
+@@ -9,6 +16,29 @@
+   } = await supabase.auth.getUser();
+ 
+   const isAdmin = user?.email === "uomankotd@gmail.com";
++  const initialFeed = await fetchFeedPage();
+ 
+-  return <Feed userId={user?.id ?? null} isAdmin={isAdmin} />;
++  return (
++    <>
++      <section dir="rtl" className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900 p-5">
++        <h1 className="text-xl font-bold text-white">ArabTips — مجتمع المراهنين العرب</h1>
++        <p className="mt-2 text-sm leading-relaxed text-zinc-400">
++          اقرأ أدلة التسجيل والتطبيقات وطرق الدفع، وشارك آراءك وتوقعاتك الرياضية مع المجتمع.
++        </p>
++        <nav aria-label="أدلة ArabTips" className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-400">
++          <Link href="/1xbet" className="hover:underline">دليل 1xBet العراق</Link>
++          <Link href="/eg/1xbet" className="hover:underline">دليل 1xBet مصر</Link>
++          <Link href="/pariland" className="hover:underline">دليل Pariland</Link>
++          <Link href="/about" className="hover:underline">عن ArabTips</Link>
++        </nav>
++      </section>
++      <Feed
++        key={user?.id ?? "guest"}
++        userId={user?.id ?? null}
++        isAdmin={isAdmin}
++        initialPosts={initialFeed.posts}
++        initialCursor={initialFeed.nextCursor}
++      />
++    </>
++  );
+ }
+diff --git a/src/components/feed.tsx b/src/components/feed.tsx
+--- a/src/components/feed.tsx
++++ b/src/components/feed.tsx
+@@ -8,23 +8,20 @@
+ import TipCard from "./tip-card";
+ import Link from "next/link";
+ 
+-export default function Feed({ userId, isAdmin = false }: { userId: string | null; isAdmin?: boolean }) {
+-  const [posts, setPosts] = useState<Post[]>([]);
+-  const [loading, setLoading] = useState(true);
++export default function Feed({ userId, isAdmin = false, initialPosts, initialCursor }: {
++  userId: string | null;
++  isAdmin?: boolean;
++  initialPosts: Post[];
++  initialCursor: string | null;
++}) {
++  const [posts, setPosts] = useState<Post[]>(initialPosts);
+   const [loadingMore, setLoadingMore] = useState(false);
+-  const [nextCursor, setNextCursor] = useState<string | null>(null);
++  const [nextCursor, setNextCursor] = useState<string | null>(initialCursor);
+   const sentinelRef = useRef<HTMLDivElement>(null);
+ 
+-  // Initial load
++  // The first page is rendered by the server; subscribe without fetching it again.
+   useEffect(() => {
+     let cancelled = false;
+-    fetchFeedPage().then((result) => {
+-      if (!cancelled) {
+-        setPosts(result.posts);
+-        setNextCursor(result.nextCursor);
+-        setLoading(false);
+-      }
+-    });
+ 
+     // Real-time subscription for new posts at the top
+     const supabase = createClient();
+@@ -114,11 +111,7 @@
+         </div>
+       )}
+ 
+-      {loading ? (
+-        <div className="flex justify-center py-12">
+-          <span className="block h-8 w-8 rounded-full border-2 border-zinc-600 border-t-emerald-400 animate-spin" />
+-        </div>
+-      ) : posts.length === 0 ? (
++      {posts.length === 0 ? (
+         <div dir="rtl" className="text-center py-12 text-zinc-500 text-sm">
+           لا توجد منشورات حتى الآن. كن أول من ينشر!
+         </div>
+diff --git a/src/proxy.ts b/src/proxy.ts
+--- a/src/proxy.ts
++++ b/src/proxy.ts
+@@ -75,6 +75,6 @@
+ 
+ export const config = {
+   matcher: [
+-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
++    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest\\.json$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+   ],
+ };
+diff --git a/tests/feed-ssr-seo.test.cjs b/tests/feed-ssr-seo.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/feed-ssr-seo.test.cjs
+@@ -0,0 +1,179 @@
++const test = require("node:test");
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++const path = require("node:path");
++const ts = require("typescript");
++const React = require("react");
++const { renderToStaticMarkup } = require("react-dom/server");
++
++function loadSource(relativePath, mocks = {}) {
++  const filename = path.join(__dirname, "..", relativePath);
++  const source = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
++    compilerOptions: {
++      module: ts.ModuleKind.CommonJS,
++      target: ts.ScriptTarget.ES2022,
++      jsx: ts.JsxEmit.ReactJSX,
++      esModuleInterop: true,
++    },
++    fileName: filename,
++  }).outputText;
++  const testModule = { exports: {} };
++  new Function("require", "module", "exports", source)(
++    (name) => Object.hasOwn(mocks, name) ? mocks[name] : require(name),
++    testModule,
++    testModule.exports,
++  );
++  return testModule.exports;
++}
++
++const OWNER = "10000000-0000-4000-8000-000000000001";
++const OTHER = "10000000-0000-4000-8000-000000000002";
++const ROWS = [
++  { id: "public-post", author_id: OTHER, is_approved: true, content: "منشور عام للاختبار", created_at: "2026-10-06T10:00:00Z" },
++  { id: "owner-private-post", author_id: OWNER, is_approved: false, content: "مسودة صاحب الحساب", created_at: "2026-10-06T09:00:00Z" },
++  { id: "other-private-post", author_id: OTHER, is_approved: false, content: "مسودة مستخدم آخر", created_at: "2026-10-06T08:00:00Z" },
++];
++
++// Synthetic Supabase query evaluator. No credentials, network or live database.
++function environment(user) {
++  const calls = [];
++  const client = {
++    auth: { getUser: async () => ({ data: { user }, error: null }) },
++    from(table) {
++      assert.equal(table, "posts");
++      let rows = [...ROWS];
++      let rowLimit;
++      const query = {
++        select() { return query; },
++        order() { return query; },
++        limit(value) { rowLimit = value; return query; },
++        eq(column, value) {
++          calls.push(["eq", column, value]);
++          rows = rows.filter((row) => row[column] === value);
++          return query;
++        },
++        or(expression) {
++          calls.push(["or", expression]);
++          const ownId = expression.match(/^is_approved\.eq\.true,author_id\.eq\.(.+)$/)?.[1];
++          assert.ok(ownId, "owner visibility query must be explicit");
++          rows = rows.filter((row) => row.is_approved || row.author_id === ownId);
++          return query;
++        },
++        lt(column, value) { rows = rows.filter((row) => row[column] < value); return query; },
++        then(resolve, reject) {
++          return Promise.resolve({ data: rows.slice(0, rowLimit), error: null }).then(resolve, reject);
++        },
++      };
++      return query;
++    },
++  };
++  const feedActions = loadSource("src/app/actions/feed.ts", {
++    "@/lib/supabase/server": { createClient: async () => client },
++  });
++  let fetchCalls = 0;
++  const fetchFeedPage = (...args) => {
++    fetchCalls++;
++    return feedActions.fetchFeedPage(...args);
++  };
++  const Link = ({ children, ...props }) => React.createElement("a", props, children);
++  const PostCard = ({ post }) => React.createElement("a", { href: `/post/${post.id}` }, post.content);
++  const Feed = loadSource("src/components/feed.tsx", {
++    "@/lib/supabase/client": { createClient: () => { throw new Error("Browser client must not run during SSR"); } },
++    "@/app/actions/feed": { fetchFeedPage },
++    "./post-card": PostCard,
++    "./tip-card": PostCard,
++    "next/link": Link,
++  }).default;
++  const HomePage = loadSource("src/app/(main)/page.tsx", {
++    "@/lib/supabase/server": { createClient: async () => client },
++    "@/app/actions/feed": { fetchFeedPage },
++    "@/components/feed": Feed,
++    "next/link": Link,
++  }).default;
++  return { calls, HomePage, Feed, fetchFeedPage, get fetchCalls() { return fetchCalls; } };
++}
++
++test("anonymous homepage HTML contains approved posts and guide links without private drafts", async () => {
++  const env = environment(null);
++  const html = renderToStaticMarkup(await env.HomePage());
++  assert.match(html, /<h1[^>]*>ArabTips/);
++  assert.match(html, /href="\/post\/public-post"/);
++  assert.doesNotMatch(html, /owner-private-post|other-private-post|مسودة/);
++  for (const href of ["/1xbet", "/eg/1xbet", "/pariland", "/about"]) {
++    assert.ok(html.includes(`href="${href}"`));
++  }
++  assert.equal(env.fetchCalls, 1);
++  assert.deepEqual(env.calls, [["eq", "is_approved", true]]);
++});
++
++test("authenticated server feed includes only that user's own draft and remounts when identity changes", async () => {
++  const env = environment({ id: OWNER, email: "member@example.test" });
++  const tree = await env.HomePage();
++  const feed = tree.props.children[1];
++  assert.equal(feed.key, OWNER, "identity changes must not retain another user's client state");
++  const html = renderToStaticMarkup(tree);
++  assert.match(html, /href="\/post\/public-post"/);
++  assert.match(html, /href="\/post\/owner-private-post"/);
++  assert.doesNotMatch(html, /other-private-post|مسودة مستخدم آخر/);
++  assert.equal(env.fetchCalls, 1);
++  assert.deepEqual(env.calls, [["or", `is_approved.eq.true,author_id.eq.${OWNER}`]]);
++  const guest = environment(null);
++  assert.equal((await guest.HomePage()).props.children[1].key, "guest");
++});
++
++test("browser mount subscribes to realtime without refetching the server-rendered first page", () => {
++  const effects = [];
++  let fetchCalls = 0;
++  let subscriptions = 0;
++  let removals = 0;
++  const channel = {
++    on() { return channel; },
++    subscribe() { subscriptions++; return channel; },
++  };
++  const Feed = loadSource("src/components/feed.tsx", {
++    react: {
++      useState: (value) => [value, () => {}],
++      useRef: () => ({ current: null }),
++      useCallback: (callback) => callback,
++      useEffect: (effect) => effects.push(effect),
++    },
++    "@/lib/supabase/client": { createClient: () => ({ channel: () => channel, removeChannel: () => { removals++; } }) },
++    "@/app/actions/feed": { fetchFeedPage: () => { fetchCalls++; throw new Error("Unexpected first-page reload"); } },
++    "./post-card": () => null,
++    "./tip-card": () => null,
++    "next/link": () => null,
++  }).default;
++  Feed({ userId: null, initialPosts: [ROWS[0]], initialCursor: "cursor" });
++  const cleanups = effects.map((effect) => effect());
++  assert.equal(subscriptions, 1);
++  assert.equal(fetchCalls, 0);
++  for (const cleanup of cleanups) if (typeof cleanup === "function") cleanup();
++  assert.equal(removals, 1);
++});
++
++test("first server feed retains its pagination cursor for subsequent batches", async () => {
++  const env = environment({ id: OWNER });
++  const first = await env.fetchFeedPage(undefined, 1);
++  assert.deepEqual(first.posts.map((post) => post.id), ["public-post"]);
++  assert.equal(first.nextCursor, ROWS[0].created_at);
++  const html = renderToStaticMarkup(React.createElement(env.Feed, {
++    userId: OWNER, initialPosts: first.posts, initialCursor: first.nextCursor,
++  }));
++  assert.doesNotMatch(html, /animate-spin|لا يوجد المزيد من المنشورات/);
++  const second = await env.fetchFeedPage(first.nextCursor, 1);
++  assert.deepEqual(second.posts.map((post) => post.id), ["owner-private-post"]);
++  assert.equal(second.nextCursor, null);
++  assert.equal(env.fetchCalls, 2);
++});
++
++test("only the literal public manifest bypasses session middleware, without opening private JSON or nested paths", () => {
++  const { config } = loadSource("src/proxy.ts");
++  const { unstable_doesMiddlewareMatch } = require("next/experimental/testing/server");
++  const matches = (pathname) => unstable_doesMiddlewareMatch({
++    config, nextConfig: {}, url: `https://arabtips.com${pathname}`,
++  });
++  assert.equal(matches("/manifest.json"), false);
++  for (const pathname of ["/manifest.json/private", "/private/data.json", "/profile/edit", "/admin", "/auth/login"]) {
++    assert.equal(matches(pathname), true, pathname);
++  }
++});

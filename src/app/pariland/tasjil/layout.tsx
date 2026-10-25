@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "التسجيل في Pariland | خطوة بخطوة 2026",
-  description:
-    "شرح التسجيل في Pariland خطوة بخطوة: اختر العراق والدينار العراقي وأدخل الرمز الترويجي X9GO أثناء إنشاء الحساب لمضاعفة مكافأتك الترحيبية.",
-  alternates: { canonical: `${BASE_URL}/pariland/tasjil` },
-  openGraph: {
-    title: "التسجيل في Pariland | خطوة بخطوة 2026",
-    description: "شرح التسجيل في Pariland خطوة بخطوة: اختر العراق والدينار العراقي وأدخل الرمز الترويجي X9GO أثناء إنشاء الحساب لمضاعفة مكافأتك الترحيبية.",
-    url: `${BASE_URL}/pariland/tasjil`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/pariland/tasjil"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -77,6 +69,7 @@ const breadcrumbJsonLd = {
 export default function TasjilLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

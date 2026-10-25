@@ -67,7 +67,7 @@ function CommentNode({
   return (
     <div className={depth > 0 ? "comment-thread" : ""}>
       <div className="flex gap-3 py-3">
-        <Link href={`/profile/${comment.profiles?.username}`}>
+        <Link href={`/profile/${comment.profiles?.username}`} rel="nofollow">
           {comment.profiles?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -83,10 +83,10 @@ function CommentNode({
         </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm">
-            <Link href={`/profile/${comment.profiles?.username}`} className="text-white font-medium hover:text-emerald-400 transition-colors">
+            <Link href={`/profile/${comment.profiles?.username}`} rel="nofollow" className="text-white font-medium hover:text-emerald-400 transition-colors">
               {comment.profiles?.display_name}
             </Link>
-            <Link href={`/profile/${comment.profiles?.username}`} className="text-zinc-500 hover:text-emerald-400 transition-colors">
+            <Link href={`/profile/${comment.profiles?.username}`} rel="nofollow" className="text-zinc-500 hover:text-emerald-400 transition-colors">
               @{comment.profiles?.username}
             </Link>
             <span className="text-zinc-600">

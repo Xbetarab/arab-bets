@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: 'لعبة الطيارة Aviator في 1xBet | شرح كامل والمخاطر الحقيقية',
-  description:
-    'شرح لعبة الطيارة Aviator في 1xbet: كيف تعمل الآلية، RNG وعدالة اللعبة، وأهم شيء — المخاطر الحقيقية وليش ما فيه استراتيجية مضمونة للربح.',
-  alternates: { canonical: `${BASE_URL}/1xbet/aviator` },
-  openGraph: {
-    title: 'لعبة الطيارة Aviator — شرح كامل والمخاطر الحقيقية',
-    description: 'الآلية، العدالة (RNG)، وتحذير صريح من مخاطر لعبة الحظ البحت.',
-    url: `${BASE_URL}/1xbet/aviator`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/1xbet/aviator"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -42,6 +34,7 @@ const breadcrumbJsonLd = {
 export default function AviatorLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

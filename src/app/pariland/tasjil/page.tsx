@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -98,10 +100,11 @@ export default function Page() {
           <div className="pb-10 pt-8 text-center md:pb-14 md:pt-12">
             <motion.h1 initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32, delay: 0.08, ease: EASE }}
               className="font-[var(--font-display)] text-[clamp(2.3rem,6vw,3.5rem)] font-bold leading-[1.1] tracking-[-0.03em]">
-              التسجيل في Pariland<br /><span className="text-[var(--neon-bright)]">خطوة بخطوة</span>
+              التسجيل في باري لاند<br /><span className="text-[var(--neon-bright)]">(Pariland) خطوة بخطوة</span>
             </motion.h1>
+            <GuideByline published={GUIDES["/pariland/tasjil"].published} updated={GUIDES["/pariland/tasjil"].modified} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
-              className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">أقل من دقيقتين لإنشاء حسابك. لا تنسَ الرمز الترويجي <strong className="text-[var(--neon-bright)]">{PROMO_CODE}</strong>.</motion.p>
+              className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">التسجيل في باري لاند (Pariland) للعراق 2026 يأخذ أقل من دقيقتين. قد تبحث عنه باسم باريلاند أو pari land. لا تنسَ الرمز الترويجي <strong className="text-[var(--neon-bright)]">{PROMO_CODE}</strong>.</motion.p>
           </div>
         </div>
       </section>

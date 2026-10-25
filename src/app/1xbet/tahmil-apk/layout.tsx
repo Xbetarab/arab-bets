@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: 'تحميل تطبيق 1xBet APK للأندرويد 2026 | تنزيل آخر إصدار',
-  description:
-    'تحميل تطبيق 1xbet APK للأندرويد مباشرة — تنزيل آخر إصدار 2026 بدون Google Play. شرح التثبيت خطوة بخطوة، ويعمل رغم الحجب في العراق.',
-  alternates: { canonical: `${BASE_URL}/1xbet/tahmil-apk` },
-  openGraph: {
-    title: 'تحميل 1xBet APK للأندرويد — آخر إصدار 2026',
-    description: 'تنزيل مباشر بصيغة APK، تثبيت خلال دقيقتين، يعمل رغم الحجب.',
-    url: `${BASE_URL}/1xbet/tahmil-apk`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/1xbet/tahmil-apk"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -41,6 +33,7 @@ const breadcrumbJsonLd = {
 export default function TahmilApkLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

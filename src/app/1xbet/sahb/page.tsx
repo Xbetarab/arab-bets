@@ -14,6 +14,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from '../RelatedLinks';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -317,6 +319,7 @@ export default function Page() {
               <br />
               <span className="text-[var(--lime-bright)]">بالتفصيل والحدود الحقيقية</span>
             </motion.h1>
+            <GuideByline published={GUIDES["/1xbet/sahb"].published} updated={GUIDES["/1xbet/sahb"].modified} />
             <motion.p
               initial={reduce ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}

@@ -8,23 +8,36 @@ import PostCard from "./post-card";
 import TipCard from "./tip-card";
 import Link from "next/link";
 
-export default function Feed({ userId, isAdmin = false }: { userId: string | null; isAdmin?: boolean }) {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function Feed({
+  userId,
+  isAdmin = false,
+  initialPosts,
+  initialCursor = null,
+}: {
+  userId: string | null;
+  isAdmin?: boolean;
+  initialPosts?: Post[];
+  initialCursor?: string | null;
+}) {
+  const hasInitialPosts = initialPosts !== undefined;
+  const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
+  const [loading, setLoading] = useState(!hasInitialPosts);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialCursor);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Initial load
+  // The homepage passes the first page from the server. Other callers still fetch it here.
   useEffect(() => {
     let cancelled = false;
-    fetchFeedPage().then((result) => {
-      if (!cancelled) {
-        setPosts(result.posts);
-        setNextCursor(result.nextCursor);
-        setLoading(false);
-      }
-    });
+    if (!hasInitialPosts) {
+      fetchFeedPage().then((result) => {
+        if (!cancelled) {
+          setPosts(result.posts);
+          setNextCursor(result.nextCursor);
+          setLoading(false);
+        }
+      });
+    }
 
     // Real-time subscription for new posts at the top
     const supabase = createClient();
@@ -57,7 +70,7 @@ export default function Feed({ userId, isAdmin = false }: { userId: string | nul
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, hasInitialPosts]);
 
   // Load more posts
   const loadMore = useCallback(async () => {

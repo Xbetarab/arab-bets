@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: 'تسجيل 1xBet العراق 2026 | 4 طرق للتسجيل خطوة بخطوة',
-  description:
-    'شرح تسجيل 1xbet العراق بأربع طرق: عن طريق الرمز، الهاتف، البريد الإلكتروني، والشبكات الاجتماعية. أدخل الرمز الترويجي أثناء التسجيل لمضاعفة مكافأتك.',
-  alternates: { canonical: `${BASE_URL}/1xbet/tasjil` },
-  openGraph: {
-    title: 'تسجيل 1xBet العراق — 4 طرق خطوة بخطوة',
-    description: 'اختر طريقتك: الرمز، الهاتف، البريد الإلكتروني، أو الشبكات الاجتماعية.',
-    url: `${BASE_URL}/1xbet/tasjil`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/1xbet/tasjil"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -42,6 +34,7 @@ const breadcrumbJsonLd = {
 export default function TasjilLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

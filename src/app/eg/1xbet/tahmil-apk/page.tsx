@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Cairo, Tajawal } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = Cairo({ subsets: ['arabic'], weight: ['700', '800', '900'], variable: '--font-display' });
 const body = Tajawal({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -92,6 +94,7 @@ export default function TahmilApkPage() {
                 className="font-[var(--font-display)] text-[clamp(2.4rem,6.5vw,4rem)] font-black leading-[1.05] tracking-[-0.04em]">
                 نزّل تطبيق<br /><span className="text-[var(--nile)]">1xBet APK</span>
               </motion.h1>
+            <GuideByline published={GUIDES["/eg/1xbet/tahmil-apk"].published} updated={GUIDES["/eg/1xbet/tahmil-apk"].modified} />
               <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
                 className="mt-5 max-w-lg text-lg leading-[1.6] text-[var(--muted)]">حمّل التطبيق الرسمي على موبايلك والعب في أي وقت. متنساش البرومو كود <strong className="text-[var(--gold-deep)]">{PROMO_CODE}</strong>.</motion.p>
               <motion.div initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.22, ease: EASE }} className="mt-8"><DownloadCTA big>حمّل التطبيق دلوقتي</DownloadCTA></motion.div>

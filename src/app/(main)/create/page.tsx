@@ -3,6 +3,7 @@ import CreatePostForm from "@/components/create-post-form";
 
 export const metadata = {
   title: "نشر جديد | arabtips",
+  robots: { index: false, follow: false },
 };
 
 export default async function CreatePostPage() {

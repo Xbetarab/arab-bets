@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "طرق الإيداع في 1xBet مصر 2026 | فودافون كاش، فوري، انستاباي",
-  description:
-    "اعرف كل طرق الإيداع المصرية في 1xBet — فودافون كاش، فوري، انستاباي، اتصالات كاش، أورنج كاش والعملات الرقمية. اختار الطريقة اللي تناسبك وابدأ اللعب.",
-  alternates: { canonical: `${BASE_URL}/eg/1xbet/idaa` },
-  openGraph: {
-    title: "طرق الإيداع في 1xBet مصر 2026",
-    description: "طرق الإيداع المصرية المدعومة في 1xBet: فودافون كاش، فوري، انستاباي وأكتر.",
-    url: `${BASE_URL}/eg/1xbet/idaa`,
-    siteName: 'ArabTips',
-    locale: 'ar_EG',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/eg/1xbet/idaa"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -54,6 +46,7 @@ const breadcrumbJsonLd = {
 export default function IdaaLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "تحميل تطبيق Pariland APK للأندرويد 2026",
-  description:
-    "تحميل تطبيق Pariland APK لأجهزة الأندرويد: المتطلبات، خطوات التثبيت، والتسجيل بالرمز الترويجي X9GO داخل التطبيق.",
-  alternates: { canonical: `${BASE_URL}/pariland/tahmil-apk` },
-  openGraph: {
-    title: "تحميل تطبيق Pariland APK للأندرويد 2026",
-    description: "تحميل تطبيق Pariland APK لأجهزة الأندرويد: المتطلبات، خطوات التثبيت، والتسجيل بالرمز الترويجي X9GO داخل التطبيق.",
-    url: `${BASE_URL}/pariland/tahmil-apk`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/pariland/tahmil-apk"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -77,6 +69,7 @@ const breadcrumbJsonLd = {
 export default function TahmilApkLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

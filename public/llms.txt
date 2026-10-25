@@ -1,0 +1,44 @@
+# عرب تيبس (ArabTips)
+
+> مجتمع عربي للمراهنين، مستقل عن أدلة التسجيل والبرومو كود. الصفحة الرئيسية مكان للنقاش والتوقعات الرياضية. الأدلة صفحات منفصلة.
+
+ArabTips is an Arabic, RTL site aimed at readers in Iraq. The homepage is a bettor community (مجتمع المراهنين العرب), not a bookmaker landing page. Affiliate guides for Pariland (باري لاند) and 1xBet live on their own paths.
+
+## Community
+- [الرئيسية](https://arabtips.com/): مجتمع المراهنين العرب في العراق. منشورات وتوقعات رياضية.
+- [من نحن](https://arabtips.com/about): سياسة التحرير والإفصاح عن العلاقة التسويقية.
+
+## أدلة 1xBet العراق
+- [1xBet العراق](https://arabtips.com/1xbet)
+- [التسجيل](https://arabtips.com/1xbet/tasjil)
+- [البرومو كود](https://arabtips.com/1xbet/promo-code)
+- [الإيداع](https://arabtips.com/1xbet/idaa)
+- [السحب](https://arabtips.com/1xbet/sahb)
+- [تحميل APK](https://arabtips.com/1xbet/tahmil-apk)
+- [الرابط الشغال](https://arabtips.com/1xbet/rabit-jadid)
+- [المكافآت](https://arabtips.com/1xbet/bonus)
+- [Aviator](https://arabtips.com/1xbet/aviator)
+
+## باري لاند (Pariland) العراق
+الاسم اللاتيني Pariland. بالعربية: باري لاند، ويُكتب أيضاً باريلاند أو pari land.
+- [المراجعة](https://arabtips.com/pariland)
+- [التسجيل](https://arabtips.com/pariland/tasjil)
+- [البرومو كود](https://arabtips.com/pariland/promo-code)
+- [الإيداع](https://arabtips.com/pariland/idaa)
+- [السحب](https://arabtips.com/pariland/sahb)
+- [تحميل APK](https://arabtips.com/pariland/tahmil-apk)
+- [المكافآت](https://arabtips.com/pariland/bonus)
+
+## 1xBet مصر
+- [1xBet مصر](https://arabtips.com/eg/1xbet)
+- [Aviator مصر](https://arabtips.com/eg/1xbet/aviator)
+- [البرومو كود](https://arabtips.com/eg/1xbet/promo-code)
+- [الإيداع](https://arabtips.com/eg/1xbet/idaa)
+- [السحب](https://arabtips.com/eg/1xbet/sahb)
+- [تحميل APK](https://arabtips.com/eg/1xbet/tahmil-apk)
+- [المكافآت](https://arabtips.com/eg/1xbet/bonus)
+
+## لا تفهرس
+- /auth و /profile و /admin و /api ليست صفحات أدلة.
+- الرمز الترويجي المذكور في الأدلة: X9GO.
+- Sitemap: https://arabtips.com/sitemap.xml

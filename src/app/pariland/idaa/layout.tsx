@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "طرق الإيداع في Pariland العراق | زين كاش وFIB وآسيا سيل",
-  description:
-    "كل طرق الإيداع في Pariland للعراق: زين كاش، آسيا سيل، FIB، كي كارد Qi، العملات الرقمية والفاست بي — مع شرح مختصر لكل طريقة.",
-  alternates: { canonical: `${BASE_URL}/pariland/idaa` },
-  openGraph: {
-    title: "طرق الإيداع في Pariland العراق | زين كاش وFIB وآسيا سيل",
-    description: "كل طرق الإيداع في Pariland للعراق: زين كاش، آسيا سيل، FIB، كي كارد Qi، العملات الرقمية والفاست بي — مع شرح مختصر لكل طريقة.",
-    url: `${BASE_URL}/pariland/idaa`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/pariland/idaa"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -77,6 +69,7 @@ const breadcrumbJsonLd = {
 export default function IdaaLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

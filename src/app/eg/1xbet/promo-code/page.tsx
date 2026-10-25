@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Cairo, Tajawal } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = Cairo({ subsets: ['arabic'], weight: ['700', '800', '900'], variable: '--font-display' });
 const body = Tajawal({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -87,6 +89,7 @@ export default function PromoCodePage() {
           <div className="pt-8 text-center">
             <motion.h1 initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.34, delay: 0.08, ease: EASE }}
               className="font-[var(--font-display)] text-[clamp(2.4rem,6.5vw,4rem)] font-black leading-[1.05] tracking-[-0.04em]">البرومو كود <span className="text-[var(--nile)]">بتاع 1xBet</span></motion.h1>
+            <GuideByline published={GUIDES["/eg/1xbet/promo-code"].published} updated={GUIDES["/eg/1xbet/promo-code"].modified} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
               className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">البرومو كود بتاع 1xBet هو <strong className="text-[var(--gold-deep)]">{PROMO_CODE}</strong> — اكتبه وانت بتسجّل عشان تضاعف مكافأتك الترحيبية على أول إيداع.</motion.p>
           </div>

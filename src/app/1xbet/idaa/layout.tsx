@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: 'طرق الإيداع في 1xBet العراق 2026 | زين كاش، آسيا سيل، FIB خطوة بخطوة',
-  description:
-    'شرح مفصّل لطرق الإيداع في 1xbet العراق: زين كاش، آسيا سيل، FIB، الفاست بي، وUSDT. خطوات كل طريقة، الحد الأدنى، وحل مشاكل الإيداع الشائعة.',
-  alternates: { canonical: `${BASE_URL}/1xbet/idaa` },
-  openGraph: {
-    title: 'طرق الإيداع في 1xBet العراق — خطوة بخطوة لكل طريقة',
-    description: 'زين كاش، آسيا سيل، FIB، USDT — شرح كامل مع حل مشاكل الإيداع الشائعة.',
-    url: `${BASE_URL}/1xbet/idaa`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/1xbet/idaa"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -42,6 +34,7 @@ const breadcrumbJsonLd = {
 export default function IdaaLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

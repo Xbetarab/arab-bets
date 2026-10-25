@@ -13,6 +13,8 @@ import RelatedLinks from '../RelatedLinks';
 import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -319,6 +321,7 @@ export default function Page() {
               <span className="text-[var(--lime-bright)]">خطوة بخطوة</span>
               <span className="text-[var(--muted)]"> — لكل طريقة دفع</span>
             </motion.h1>
+            <GuideByline published={GUIDES["/1xbet/idaa"].published} updated={GUIDES["/1xbet/idaa"].modified} />
 
             <motion.p
               initial={reduce ? false : { opacity: 0, y: 14 }}

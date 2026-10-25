@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://arabtips.com"),
   title: "arabtips | مجتمع المراهنين العرب",
   description: "المنصة الاجتماعية لمجتمع المراهنين العرب",
   manifest: "/manifest.json",

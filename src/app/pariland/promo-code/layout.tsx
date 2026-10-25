@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "الرمز الترويجي Pariland X9GO | مكافأة مضاعفة 2026",
-  description:
-    "الرمز الترويجي Pariland هو X9GO — أدخل البرومو كود أثناء التسجيل لمضاعفة مكافأتك الترحيبية على أول إيداع.",
-  alternates: { canonical: `${BASE_URL}/pariland/promo-code` },
-  openGraph: {
-    title: "الرمز الترويجي Pariland X9GO | مكافأة مضاعفة 2026",
-    description: "الرمز الترويجي Pariland هو X9GO — أدخل البرومو كود أثناء التسجيل لمضاعفة مكافأتك الترحيبية على أول إيداع.",
-    url: `${BASE_URL}/pariland/promo-code`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/pariland/promo-code"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -77,6 +69,7 @@ const breadcrumbJsonLd = {
 export default function PromoCodeLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

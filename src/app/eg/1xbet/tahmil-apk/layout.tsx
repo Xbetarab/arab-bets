@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "تحميل تطبيق 1xBet مصر APK 2026 | خطوات التثبيت والبرومو كود X9GO",
-  description:
-    "حمّل تطبيق 1xBet APK لأندرويد في مصر خطوة بخطوة، واعرف متطلبات التشغيل وطريقة تفعيل المصادر غير المعروفة، ومتنساش تكتب البرومو كود X9GO وقت التسجيل.",
-  alternates: { canonical: `${BASE_URL}/eg/1xbet/tahmil-apk` },
-  openGraph: {
-    title: "تحميل تطبيق 1xBet مصر APK 2026",
-    description: "خطوات تحميل وتثبيت تطبيق 1xBet APK في مصر مع البرومو كود X9GO.",
-    url: `${BASE_URL}/eg/1xbet/tahmil-apk`,
-    siteName: 'ArabTips',
-    locale: 'ar_EG',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/eg/1xbet/tahmil-apk"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -54,6 +46,7 @@ const breadcrumbJsonLd = {
 export default function TahmilApkLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

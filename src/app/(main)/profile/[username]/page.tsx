@@ -19,11 +19,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .ilike("username", username)
     .single();
 
-  if (!profile) return { title: "مستخدم غير موجود | arabtips" };
+  const robots = {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  } as const;
+
+  if (!profile) return { title: "مستخدم غير موجود | arabtips", robots };
 
   return {
     title: `${profile.display_name} (@${username}) | arabtips`,
     description: `ملف ${profile.display_name} على arabtips`,
+    robots,
   };
 }
 

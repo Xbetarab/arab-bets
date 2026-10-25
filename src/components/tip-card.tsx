@@ -155,7 +155,7 @@ export default function TipCard({
       <div className="p-4 space-y-3">
         {/* Author */}
         <div className="flex items-center gap-3">
-          <Link href={`/profile/${profile?.username}`}>
+          <Link href={`/profile/${profile?.username}`} rel="nofollow">
             {profile?.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -171,14 +171,14 @@ export default function TipCard({
           </Link>
           <div className="flex-1 min-w-0">
             <Link
-              href={`/profile/${profile?.username}`}
+              href={`/profile/${profile?.username}`} rel="nofollow"
               className="text-white text-sm font-medium truncate block hover:text-emerald-400 transition-colors"
             >
               {profile?.display_name || "مجهول"}
             </Link>
             <p className="text-zinc-500 text-xs">
               <Link
-                href={`/profile/${profile?.username}`}
+                href={`/profile/${profile?.username}`} rel="nofollow"
                 className="hover:text-emerald-400 transition-colors"
               >
                 @{profile?.username}

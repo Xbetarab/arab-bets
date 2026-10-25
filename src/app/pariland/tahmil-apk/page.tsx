@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -94,8 +96,9 @@ export default function Page() {
             <div>
               <motion.h1 initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32, delay: 0.08, ease: EASE }}
                 className="font-[var(--font-display)] text-[clamp(2.2rem,6vw,3.5rem)] font-bold leading-[1.1] tracking-[-0.03em]">
-                تطبيق Pariland<br /><span className="text-[var(--neon-bright)]">للأندرويد APK</span>
+                تطبيق باري لاند<br /><span className="text-[var(--neon-bright)]">(Pariland) للأندرويد APK</span>
               </motion.h1>
+            <GuideByline published={GUIDES["/pariland/tahmil-apk"].published} updated={GUIDES["/pariland/tahmil-apk"].modified} />
               <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
                 className="mt-5 max-w-lg text-lg leading-[1.6] text-[var(--muted)]">حمّل التطبيق الرسمي للأندرويد وراهن من هاتفك بسهولة. لا تنسَ الرمز <strong className="text-[var(--neon-bright)]">{PROMO_CODE}</strong> عند التسجيل.</motion.p>
               <motion.div initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.22, ease: EASE }} className="mt-8"><CTA big>حمّل التطبيق ←</CTA></motion.div>

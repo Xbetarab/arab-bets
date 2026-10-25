@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Cairo, Tajawal } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = Cairo({ subsets: ['arabic'], weight: ['700', '800', '900'], variable: '--font-display' });
 const body = Tajawal({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -93,6 +95,7 @@ export default function SahbPage() {
           <div className="py-12 md:py-16">
             <motion.h1 initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.34, delay: 0.08, ease: EASE }}
               className="font-[var(--font-display)] text-[clamp(2.4rem,6.5vw,4rem)] font-black leading-[1.05] tracking-[-0.04em]">طرق السحب <span className="text-[var(--nile)]">بالجنيه</span></motion.h1>
+            <GuideByline published={GUIDES["/eg/1xbet/sahb"].published} updated={GUIDES["/eg/1xbet/sahb"].modified} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
               className="mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">الحدود الدنيا والقصوى لكل طريقة سحب بالجنيه المصري والبيانات المطلوبة.</motion.p>
           </div>

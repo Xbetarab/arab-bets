@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: 'رابط 1xBet الشغّال الجديد 2026 | تجاوز الحجب في العراق',
-  description:
-    'رابط 1xbet الشغال والبديل المحدّث باستمرار للعراق. حل مشكلة حجب 1xbet: افتح الموقع الرسمي مباشرة أو حمّل تطبيق APK، وحسابك يبقى نفسه.',
-  alternates: { canonical: `${BASE_URL}/1xbet/rabit-jadid` },
-  openGraph: {
-    title: 'رابط 1xBet الشغّال الآن — تجاوز الحجب في العراق',
-    description: 'الرابط البديل المحدّث باستمرار. اضغط وادخل مباشرة، حسابك يبقى نفسه.',
-    url: `${BASE_URL}/1xbet/rabit-jadid`,
-    siteName: 'ArabTips',
-    locale: 'ar_IQ',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/1xbet/rabit-jadid"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -42,6 +34,7 @@ const breadcrumbJsonLd = {
 export default function RabitJadidLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

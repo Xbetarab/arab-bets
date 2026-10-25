@@ -14,6 +14,8 @@ import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from '../RelatedLinks';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -202,6 +204,7 @@ export default function Page() {
               <br />
               <span className="text-[var(--lime-bright)]">بالتفصيل والشروط الحقيقية</span>
             </motion.h1>
+            <GuideByline published={GUIDES["/1xbet/bonus"].published} updated={GUIDES["/1xbet/bonus"].modified} />
             <motion.p
               initial={reduce ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -258,7 +261,7 @@ export default function Page() {
         <Reveal delay={0.1}>
           <div className="mt-8 rounded-[24px] border border-[var(--line)] bg-[var(--surface)] p-7">
             <p className="leading-[1.7] text-[var(--muted)]">
-              لنفترض حصلت على مكافأة <strong className="text-[var(--ink)]">50,000 دينار</strong>. شرط "تدوير 5 مرات" يعني
+              لنفترض حصلت على مكافأة <strong className="text-[var(--ink)]">50,000 دينار</strong>. شرط «تدوير 5 مرات» يعني
               يجب تراهن بمجموع <strong className="text-[var(--lime-bright)]">250,000 دينار</strong> (50,000 × 5) برهانات
               تراكمية صحيحة قبل أن تصبح المكافأة (وأرباحها) قابلة للسحب.
             </p>

@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "طرق السحب من 1xBet مصر 2026 | الحدود بالجنيه المصري",
-  description:
-    "جدول كامل بطرق السحب من 1xBet في مصر بالجنيه المصري — الحد الأدنى والأقصى لكل طريقة (فودافون كاش، اتصالات كاش، انستاباي، فوري) والبيانات المطلوبة.",
-  alternates: { canonical: `${BASE_URL}/eg/1xbet/sahb` },
-  openGraph: {
-    title: "طرق السحب من 1xBet مصر 2026",
-    description: "الحدود الدنيا والقصوى للسحب من 1xBet بالجنيه المصري والبيانات المطلوبة.",
-    url: `${BASE_URL}/eg/1xbet/sahb`,
-    siteName: 'ArabTips',
-    locale: 'ar_EG',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/eg/1xbet/sahb"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -54,6 +46,7 @@ const breadcrumbJsonLd = {
 export default function SahbLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

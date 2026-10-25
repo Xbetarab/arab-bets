@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === "/sitemap_index.xml") {
+    return NextResponse.redirect(new URL("/sitemap.xml", request.url), 301);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,26 +33,18 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // PUBLIC routes — accessible without login
-  const publicPaths = [
-    "/",
-    "/auth/login",
-    "/auth/signup",
-    "/auth/callback",
-    "/auth/verify-email",
-  ];
+  // Only real private areas require a session. Unknown URLs fall through
+  // to the app 404, and public profile pages stay reachable (noindex).
+  const { pathname } = request.nextUrl;
+  const requiresLogin =
+    pathname === "/create" ||
+    pathname.startsWith("/create/") ||
+    pathname === "/profile/edit" ||
+    pathname.startsWith("/profile/edit/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/");
 
-  const isPublic =
-    publicPaths.includes(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith("/post/") ||
-    request.nextUrl.pathname.startsWith("/1xbet") ||
-    request.nextUrl.pathname.startsWith("/pariland") ||
-    request.nextUrl.pathname.startsWith("/go/") ||
-    request.nextUrl.pathname.startsWith("/eg") ||
-    request.nextUrl.pathname.startsWith("/about");
-
-  // PROTECTED routes — redirect to login if not authenticated
-  if (!user && !isPublic) {
+  if (!user && requiresLogin) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
@@ -59,6 +55,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|llms.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

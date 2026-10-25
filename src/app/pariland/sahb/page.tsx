@@ -2,6 +2,8 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -98,8 +100,9 @@ export default function Page() {
           <div className="pb-10 pt-8 md:pb-14 md:pt-12">
             <motion.h1 initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32, delay: 0.08, ease: EASE }}
               className="font-[var(--font-display)] text-[clamp(2.2rem,6vw,3.5rem)] font-bold leading-[1.1] tracking-[-0.03em]">
-              طرق السحب من <span className="text-[var(--neon-bright)]">Pariland</span>
+              طرق السحب من باري لاند <span className="text-[var(--neon-bright)]">(Pariland)</span>
             </motion.h1>
+            <GuideByline published={GUIDES["/pariland/sahb"].published} updated={GUIDES["/pariland/sahb"].modified} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
               className="mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">الحدود الدنيا والقصوى لكل طريقة سحب (بالدينار العراقي) والبيانات المطلوبة.</motion.p>
           </div>

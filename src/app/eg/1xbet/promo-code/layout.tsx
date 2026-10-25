@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { GUIDES } from "@/lib/guides";
+import { articleJsonLd, guideMetadata } from "@/lib/seo";
 
-const BASE_URL = 'https://arabtips.com';
 
-export const metadata: Metadata = {
-  title: "البرومو كود 1xBet مصر X9GO 2026 | ضاعف مكافأتك الترحيبية",
-  description:
-    "البرومو كود بتاع 1xBet في مصر هو X9GO — اكتبه وقت التسجيل عشان تضاعف مكافأتك الترحيبية على أول إيداع. اعرف الفرق بالكود ومن غيره وإزاي تستخدمه صح.",
-  alternates: { canonical: `${BASE_URL}/eg/1xbet/promo-code` },
-  openGraph: {
-    title: "البرومو كود 1xBet مصر X9GO 2026",
-    description: "استخدم البرومو كود X9GO وقت التسجيل في 1xBet مصر لمضاعفة مكافأتك الترحيبية.",
-    url: `${BASE_URL}/eg/1xbet/promo-code`,
-    siteName: 'ArabTips',
-    locale: 'ar_EG',
-    type: 'article',
-  },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-};
+
+const guide = GUIDES["/eg/1xbet/promo-code"];
+
+export const metadata: Metadata = guideMetadata(guide);
+
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -54,6 +46,7 @@ const breadcrumbJsonLd = {
 export default function PromoCodeLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ArticleJsonLd data={articleJsonLd(guide)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

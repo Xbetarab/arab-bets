@@ -6,6 +6,10 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    files: ["tests/**/*.test.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
     rules: {
       // Allow setState in effects for debounce / subscription patterns
       "react-hooks/set-state-in-effect": "off",

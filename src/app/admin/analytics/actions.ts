@@ -190,8 +190,9 @@ const CACHE_TTL_MS = 60_000;
 //          10 content count queries, duplicate posts/comments fetches)
 // After:  ~9 DB queries total (1 assertAdmin, 1 fetchAllAuthUsers, 8 parallel queries)
 
-async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
-  const admin = await assertAdmin();
+async function fetchAnalyticsUncached(
+  admin: ReturnType<typeof createAdminClient>
+): Promise<AnalyticsData> {
   const ranges = getTimeRanges();
 
   // ── Parallel batch: all data in one round-trip ──
@@ -386,11 +387,13 @@ async function fetchAnalyticsUncached(): Promise<AnalyticsData> {
 // ── Public API ──
 
 export async function fetchAllAnalytics(force = false): Promise<AnalyticsData> {
+  // Every invocation is a public Server Action entry point, including cache hits.
+  const admin = await assertAdmin();
   if (!force && analyticsCache && Date.now() - analyticsCache.timestamp < CACHE_TTL_MS) {
     return analyticsCache.data;
   }
 
-  const data = await fetchAnalyticsUncached();
+  const data = await fetchAnalyticsUncached(admin);
   analyticsCache = { data, timestamp: Date.now() };
   return data;
 }

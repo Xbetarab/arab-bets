@@ -1,14 +1,10 @@
-import type { Metadata } from 'next';
 import { ArticleJsonLd } from "@/components/seo/article-jsonld";
 import { GUIDES } from "@/lib/guides";
 import { articleJsonLd, guideMetadata } from "@/lib/seo";
+import type { Metadata } from 'next';
 
 
-
-const guide = GUIDES["/pariland/bonus"];
-
-export const metadata: Metadata = guideMetadata(guide);
-
+export const metadata: Metadata = guideMetadata(GUIDES["/pariland/bonus"]);
 
 const faqJsonLd = {
   "@context": "https://schema.org",
@@ -69,7 +65,7 @@ const breadcrumbJsonLd = {
 export default function BonusLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <ArticleJsonLd data={articleJsonLd(guide)} />
+      <ArticleJsonLd data={articleJsonLd(GUIDES["/pariland/bonus"])} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

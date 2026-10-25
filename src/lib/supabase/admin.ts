@@ -16,3 +16,4 @@ export function createAdminClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
+import "server-only";

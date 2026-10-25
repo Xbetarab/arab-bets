@@ -1,5 +1,8 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+
 /**
  * 1xBet العراق — صفحة الرمز الترويجي  (/1xbet/promo-code)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -13,8 +16,6 @@ import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from '../RelatedLinks';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -250,18 +251,18 @@ export default function Page() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.32, delay: 0.08, ease: EASE }}
                 className="font-[var(--font-display)] text-[clamp(2.3rem,6vw,3.75rem)] font-bold leading-[1.08] tracking-[-0.03em]">
-                برومو كود 1xBet العراق
+                كود خصم 1xBet
                 <br />
-                <span className="text-[var(--lime-bright)]">الرمز X9GO</span>
+                <span className="text-[var(--lime-bright)]">للاعب العراقي</span>
               </motion.h1>
-            <GuideByline published={GUIDES["/1xbet/promo-code"].published} updated={GUIDES["/1xbet/promo-code"].modified} />
+              <GuideByline published={GUIDES["/1xbet/promo-code"].published} updated={GUIDES["/1xbet/promo-code"].modified} />
 
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
                 className="mt-5 max-w-lg text-lg leading-[1.6] text-[var(--muted)]">
-                برومو كود 1xBet العراق هو <strong className="font-bold text-[var(--lime-bright)]">{PROMO_CODE}</strong>. انسخه وأدخله{' '}
+                انسخ الرمز الترويجي <strong className="font-bold text-[var(--lime-bright)]">{PROMO_CODE}</strong> وأدخله{' '}
                 <strong className="font-bold text-[var(--ink)]">أثناء التسجيل</strong> — يضاعف مكافأتك الترحيبية على القسمين
                 الرياضي والكازينو. تنبيه مهم: لا يمكن إضافته بعد إنشاء الحساب.
               </motion.p>

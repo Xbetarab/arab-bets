@@ -1,37 +1,12 @@
-import type { Metadata } from 'next';
 import { ArticleJsonLd } from "@/components/seo/article-jsonld";
 import { GUIDES } from "@/lib/guides";
 import { articleJsonLd, guideMetadata } from "@/lib/seo";
+import type { Metadata } from 'next';
 
 
-
-const guide = GUIDES["/eg/1xbet/idaa"];
-
-export const metadata: Metadata = guideMetadata(guide);
+export const metadata: Metadata = guideMetadata(GUIDES["/eg/1xbet/idaa"]);
 
 
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "إيه أشهر طرق الإيداع في 1xBet مصر؟",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "أشهر طرق الإيداع المصرية هي فودافون كاش، وكمان فوري، انستاباي، اتصالات كاش، أورنج كاش، بالإضافة للعملات الرقمية زي USDT."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "الإيداع بفودافون كاش بيوصل بسرعة؟",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "أيوة، الإيداع من محفظة فودافون كاش بيكون فوري في العادة، فتقدر تبدأ اللعب على طول بعد تأكيد العملية."
-      }
-    }
-  ]
-};
 
 const breadcrumbJsonLd = {
   "@context": "https://schema.org",
@@ -46,8 +21,8 @@ const breadcrumbJsonLd = {
 export default function IdaaLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <ArticleJsonLd data={articleJsonLd(guide)} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <ArticleJsonLd data={articleJsonLd(GUIDES["/eg/1xbet/idaa"])} />
+      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}
     </>

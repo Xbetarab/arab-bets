@@ -1,0 +1,82 @@
+[
+  {
+    "kind": "triggers",
+    "metadata": [
+      {
+        "tgname": "trg_follow_delete",
+        "definition": "CREATE TRIGGER trg_follow_delete AFTER DELETE ON public.follows FOR EACH ROW EXECUTE FUNCTION handle_follow_count()",
+        "table_name": "follows"
+      },
+      {
+        "tgname": "trg_follow_insert",
+        "definition": "CREATE TRIGGER trg_follow_insert AFTER INSERT ON public.follows FOR EACH ROW EXECUTE FUNCTION handle_follow_count()",
+        "table_name": "follows"
+      }
+    ]
+  },
+  {
+    "kind": "constraints",
+    "metadata": [
+      {
+        "conname": "comment_likes_comment_id_fkey",
+        "definition": "FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE",
+        "table_name": "comment_likes"
+      },
+      {
+        "conname": "comment_likes_pkey",
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "comment_likes"
+      },
+      {
+        "conname": "comment_likes_user_id_comment_id_key",
+        "definition": "UNIQUE (user_id, comment_id)",
+        "table_name": "comment_likes"
+      },
+      {
+        "conname": "comment_likes_user_id_fkey",
+        "definition": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE",
+        "table_name": "comment_likes"
+      },
+      {
+        "conname": "follows_check",
+        "definition": "CHECK ((follower_id <> following_id))",
+        "table_name": "follows"
+      },
+      {
+        "conname": "follows_follower_id_fkey",
+        "definition": "FOREIGN KEY (follower_id) REFERENCES profiles(id) ON DELETE CASCADE",
+        "table_name": "follows"
+      },
+      {
+        "conname": "follows_follower_id_following_id_key",
+        "definition": "UNIQUE (follower_id, following_id)",
+        "table_name": "follows"
+      },
+      {
+        "conname": "follows_following_id_fkey",
+        "definition": "FOREIGN KEY (following_id) REFERENCES profiles(id) ON DELETE CASCADE",
+        "table_name": "follows"
+      },
+      {
+        "conname": "follows_pkey",
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "follows"
+      },
+      {
+        "conname": "likes_pkey",
+        "definition": "PRIMARY KEY (id)",
+        "table_name": "likes"
+      },
+      {
+        "conname": "likes_user_id_fkey",
+        "definition": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE",
+        "table_name": "likes"
+      },
+      {
+        "conname": "likes_user_id_target_id_target_type_key",
+        "definition": "UNIQUE (user_id, target_id, target_type)",
+        "table_name": "likes"
+      }
+    ]
+  }
+]

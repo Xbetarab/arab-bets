@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateLinkClickInput, validatePageViewInput } from "@/lib/input-validation";
 
 export async function trackLinkClick(data: {
   target_url: string;
@@ -10,6 +11,7 @@ export async function trackLinkClick(data: {
   user_agent?: string;
   referrer?: string;
 }) {
+  const validated = validateLinkClickInput(data);
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,13 +21,13 @@ export async function trackLinkClick(data: {
   const sessionId = user ? null : `anon-${Date.now()}`;
 
   await supabase.from("link_clicks").insert({
-    target_url: data.target_url,
-    link_type: data.link_type || null,
-    source_page: data.source_page || null,
+    target_url: validated.target_url,
+    link_type: validated.link_type,
+    source_page: validated.source_page,
     user_id: user?.id || null,
     session_id: sessionId,
-    user_agent: data.user_agent || null,
-    referrer: data.referrer || null,
+    user_agent: validated.user_agent,
+    referrer: validated.referrer,
   });
 }
 
@@ -37,6 +39,7 @@ export async function trackPageView(data: {
   utm_medium?: string;
   utm_campaign?: string;
 }) {
+  const validated = validatePageViewInput(data);
   const userClient = await createClient();
   const {
     data: { user },
@@ -47,14 +50,14 @@ export async function trackPageView(data: {
   // Use admin client to bypass RLS — anonymous visitors can't insert via regular client
   const admin = createAdminClient();
   await admin.from("link_clicks").insert({
-    target_url: data.page_url,
+    target_url: validated.page_url,
     link_type: "page_view",
-    source_page: data.referrer || null,
+    source_page: validated.referrer,
     user_id: user?.id || null,
     session_id: sessionId,
-    user_agent: data.user_agent || null,
-    referrer: [data.utm_source, data.utm_medium, data.utm_campaign]
+    user_agent: validated.user_agent,
+    referrer: [validated.utm_source, validated.utm_medium, validated.utm_campaign]
       .filter(Boolean)
-      .join(" | ") || data.referrer || null,
+      .join(" | ") || validated.referrer,
   });
 }

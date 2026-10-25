@@ -1,5 +1,10 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { articleJsonLd } from "@/lib/seo";
+
 /**
  * Pariland العراق — الصفحة الرئيسية (pillar)  (/pariland)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -13,8 +18,6 @@
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -90,12 +93,12 @@ function PrimaryCTA({ children, className = '', big = false }: { children: React
 /* ------------------------------ روابط السيلو الداخلية ------------------------------ */
 
 const siloLinks = [
-  { href: '/pariland/tasjil', title: 'التسجيل في باري لاند', desc: 'خطوة بخطوة بأربع طرق مختلفة' },
-  { href: '/pariland/tahmil-apk', title: 'تحميل تطبيق باري لاند APK', desc: 'آخر إصدار للأندرويد' },
-  { href: '/pariland/promo-code', title: 'برومو كود باري لاند', desc: `استخدم ${PROMO_CODE} لمضاعفة مكافأتك` },
+  { href: '/pariland/tasjil', title: 'التسجيل في Pariland', desc: 'خطوة بخطوة بأربع طرق مختلفة' },
+  { href: '/pariland/tahmil-apk', title: 'تحميل تطبيق Pariland APK', desc: 'آخر إصدار للأندرويد' },
+  { href: '/pariland/promo-code', title: 'الرمز الترويجي Pariland', desc: `استخدم ${PROMO_CODE} لمضاعفة مكافأتك` },
   { href: '/pariland/idaa', title: 'طرق الإيداع', desc: 'زين كاش، آسيا سيل، FIB وغيرها' },
   { href: '/pariland/sahb', title: 'طرق السحب', desc: 'الحدود والشروط الحقيقية' },
-  { href: '/pariland/bonus', title: 'مكافآت باري لاند', desc: 'شروط الرهان بالتفصيل' },
+  { href: '/pariland/bonus', title: 'مكافآت Pariland', desc: 'شروط الرهان بالتفصيل' },
 ];
 
 function RelatedLinks() {
@@ -261,13 +264,14 @@ export default function Page() {
                 <br />
                 <span className="text-[var(--neon-bright)]">المراجعة الكاملة</span>
               </motion.h1>
-            <GuideByline published={GUIDES["/pariland"].published} updated={GUIDES["/pariland"].modified} />
+              <GuideByline published={GUIDES["/pariland"].published} updated={GUIDES["/pariland"].modified} />
+              <ArticleJsonLd data={articleJsonLd(GUIDES["/pariland"])} />
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
                 className="mt-5 max-w-lg text-lg leading-[1.6] text-[var(--muted)]">
-                كل ما تحتاج معرفته عن باري لاند (Pariland) في العراق: التسجيل، الإيداع، السحب، والمكافآت. يكتبها البعض باريلاند أو pari land. لا تنسَ الرمز الترويجي{' '}
+                كل ما تحتاج معرفته عن Pariland: التسجيل، الإيداع، السحب، والمكافآت. لا تنسَ الرمز الترويجي{' '}
                 <strong className="font-bold text-[var(--neon-bright)]">{PROMO_CODE}</strong> لمضاعفة مكافأتك الترحيبية.
               </motion.p>
               <motion.div

@@ -1,10 +1,13 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { articleJsonLd } from "@/lib/seo";
+
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Cairo, Tajawal } from 'next/font/google';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = Cairo({ subsets: ['arabic'], weight: ['700', '800', '900'], variable: '--font-display' });
 const body = Tajawal({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -136,6 +139,7 @@ export default function Page() {
               كل حاجة عن <span className="text-[var(--nile)]">1xBet في مصر</span>
             </motion.h1>
             <GuideByline published={GUIDES["/eg/1xbet"].published} updated={GUIDES["/eg/1xbet"].modified} />
+            <ArticleJsonLd data={articleJsonLd(GUIDES["/eg/1xbet"])} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.18, ease: EASE }}
               className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">التحميل، الإيداع والسحب بالطرق المصرية، والمكافآت — كله في مكان واحد. البرومو كود <strong className="text-[var(--gold-deep)]">{PROMO_CODE}</strong> بيضاعف مكافأتك الترحيبية.</motion.p>
             <motion.div initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.24, ease: EASE }} className="mt-8 flex justify-center"><DownloadCTA big>حمّل التطبيق دلوقتي</DownloadCTA></motion.div>

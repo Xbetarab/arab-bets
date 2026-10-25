@@ -1,14 +1,10 @@
-import type { Metadata } from 'next';
 import { ArticleJsonLd } from "@/components/seo/article-jsonld";
 import { GUIDES } from "@/lib/guides";
 import { articleJsonLd, guideMetadata } from "@/lib/seo";
+import type { Metadata } from 'next';
 
 
-
-const guide = GUIDES["/1xbet/tahmil-apk"];
-
-export const metadata: Metadata = guideMetadata(guide);
-
+export const metadata: Metadata = guideMetadata(GUIDES["/1xbet/tahmil-apk"]);
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -33,7 +29,7 @@ const breadcrumbJsonLd = {
 export default function TahmilApkLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <ArticleJsonLd data={articleJsonLd(guide)} />
+      <ArticleJsonLd data={articleJsonLd(GUIDES["/1xbet/tahmil-apk"])} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {children}

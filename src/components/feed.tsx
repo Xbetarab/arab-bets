@@ -6,38 +6,25 @@ import type { Post } from "@/lib/supabase/types";
 import { fetchFeedPage } from "@/app/actions/feed";
 import PostCard from "./post-card";
 import TipCard from "./tip-card";
+import ImportedPostCard, { type XSportsPost } from "./x-sports-post";
 import Link from "next/link";
 
-export default function Feed({
-  userId,
-  isAdmin = false,
-  initialPosts,
-  initialCursor = null,
-}: {
+export default function Feed({ userId, isAdmin = false, initialPosts, initialCursor, importedPosts = [], importedReplies = [] }: {
   userId: string | null;
   isAdmin?: boolean;
-  initialPosts?: Post[];
-  initialCursor?: string | null;
+  initialPosts: Post[];
+  initialCursor: string | null;
+  importedPosts?: XSportsPost[];
+  importedReplies?: XSportsPost[];
 }) {
-  const hasInitialPosts = initialPosts !== undefined;
-  const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
-  const [loading, setLoading] = useState(!hasInitialPosts);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(initialCursor);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // The homepage passes the first page from the server. Other callers still fetch it here.
+  // The first page is rendered by the server; subscribe without fetching it again.
   useEffect(() => {
     let cancelled = false;
-    if (!hasInitialPosts) {
-      fetchFeedPage().then((result) => {
-        if (!cancelled) {
-          setPosts(result.posts);
-          setNextCursor(result.nextCursor);
-          setLoading(false);
-        }
-      });
-    }
 
     // Real-time subscription for new posts at the top
     const supabase = createClient();
@@ -70,7 +57,7 @@ export default function Feed({
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [userId, hasInitialPosts]);
+  }, [userId]);
 
   // Load more posts
   const loadMore = useCallback(async () => {
@@ -104,6 +91,14 @@ export default function Feed({
     return () => observer.disconnect();
   }, [loadMore]);
 
+  // Keep imported items in the same chronological list as ordinary posts.
+  // They remain separate records, so native likes, comments and admin actions
+  // are never called with an external ID.
+  const feedItems = [
+    ...posts.map((post) => ({ kind: "local" as const, key: `local:${post.id}`, time: Date.parse(post.created_at), post })),
+    ...importedPosts.map((post) => ({ kind: "imported" as const, key: `imported:${post.x_id}`, time: Date.parse(post.posted_at), post })),
+  ].sort((a, b) => b.time - a.time || a.key.localeCompare(b.key));
+
   return (
     <div className="space-y-4">
       {/* Quick post CTA */}
@@ -127,23 +122,24 @@ export default function Feed({
         </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <span className="block h-8 w-8 rounded-full border-2 border-zinc-600 border-t-emerald-400 animate-spin" />
-        </div>
-      ) : posts.length === 0 ? (
+      {feedItems.length === 0 ? (
         <div dir="rtl" className="text-center py-12 text-zinc-500 text-sm">
           لا توجد منشورات حتى الآن. كن أول من ينشر!
         </div>
       ) : (
         <>
-          {posts.map((post) =>
-            post.tip_data ? (
-              <TipCard key={post.id} post={post} userId={userId} isAdmin={isAdmin} />
-            ) : (
-              <PostCard key={post.id} post={post} userId={userId} isAdmin={isAdmin} />
-            )
-          )}
+          {feedItems.map((item) => item.kind === "imported" ? (
+            <ImportedPostCard
+              key={item.key}
+              post={item.post}
+              userId={userId}
+              replies={importedReplies.filter((reply) => reply.conversation_id === item.post.x_id)}
+            />
+          ) : item.post.tip_data ? (
+            <TipCard key={item.key} post={item.post} userId={userId} isAdmin={isAdmin} />
+          ) : (
+            <PostCard key={item.key} post={item.post} userId={userId} isAdmin={isAdmin} />
+          ))}
 
           {/* Sentinel for infinite scroll */}
           <div ref={sentinelRef} className="h-1" />

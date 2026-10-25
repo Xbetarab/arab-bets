@@ -1,5 +1,8 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+
 /**
  * 1xBet العراق — صفحة المكافآت بالتفصيل  (/1xbet/bonus)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -14,8 +17,6 @@ import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from '../RelatedLinks';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -261,7 +262,7 @@ export default function Page() {
         <Reveal delay={0.1}>
           <div className="mt-8 rounded-[24px] border border-[var(--line)] bg-[var(--surface)] p-7">
             <p className="leading-[1.7] text-[var(--muted)]">
-              لنفترض حصلت على مكافأة <strong className="text-[var(--ink)]">50,000 دينار</strong>. شرط «تدوير 5 مرات» يعني
+              لنفترض حصلت على مكافأة <strong className="text-[var(--ink)]">50,000 دينار</strong>. شرط &quot;تدوير 5 مرات&quot; يعني
               يجب تراهن بمجموع <strong className="text-[var(--lime-bright)]">250,000 دينار</strong> (50,000 × 5) برهانات
               تراكمية صحيحة قبل أن تصبح المكافأة (وأرباحها) قابلة للسحب.
             </p>

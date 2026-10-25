@@ -1,10 +1,11 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Cairo, Tajawal } from 'next/font/google';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = Cairo({ subsets: ['arabic'], weight: ['700', '800', '900'], variable: '--font-display' });
 const body = Tajawal({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -97,7 +98,7 @@ export default function BonusPage() {
           <div className="pt-8 text-center">
             <motion.h1 initial={reduce ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.34, delay: 0.08, ease: EASE }}
               className="font-[var(--font-display)] text-[clamp(2.4rem,6.5vw,4rem)] font-black leading-[1.05] tracking-[-0.04em]">مكافآت <span className="text-[var(--nile)]">1xBet</span></motion.h1>
-            <GuideByline published={GUIDES["/eg/1xbet/bonus"].published} updated={GUIDES["/eg/1xbet/bonus"].modified} />
+              <GuideByline published={GUIDES["/eg/1xbet/bonus"].published} updated={GUIDES["/eg/1xbet/bonus"].modified} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
               className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">مكافأة الكازينو متوزّعة على 4 إيداعات، والرياضة على الأول. افهم الشروط قبل ما تبدأ.</motion.p>
           </div>

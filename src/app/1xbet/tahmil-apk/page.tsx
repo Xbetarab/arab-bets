@@ -1,5 +1,8 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+
 import RelatedLinks from '../RelatedLinks';
 
 /**
@@ -14,8 +17,6 @@ import RelatedLinks from '../RelatedLinks';
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -258,7 +259,7 @@ export default function Page() {
                 <span className="text-[var(--lime-bright)]">APK للأندرويد</span>
                 <span className="text-[var(--muted)]"> — آخر إصدار</span>
               </motion.h1>
-            <GuideByline published={GUIDES["/1xbet/tahmil-apk"].published} updated={GUIDES["/1xbet/tahmil-apk"].modified} />
+              <GuideByline published={GUIDES["/1xbet/tahmil-apk"].published} updated={GUIDES["/1xbet/tahmil-apk"].modified} />
 
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 14 }}

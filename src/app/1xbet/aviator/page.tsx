@@ -1,5 +1,8 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+
 /**
  * 1xBet العراق — صفحة لعبة الطيارة Aviator  (/1xbet/aviator)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -16,8 +19,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from '../RelatedLinks';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -121,6 +122,7 @@ function LiveMultiplierDemo() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crashPoint, reduce]);
 
   const progress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
@@ -171,7 +173,7 @@ function LiveMultiplierDemo() {
       </div>
 
       <p className="mt-4 text-center text-sm leading-[1.6] text-[var(--muted)]">
-        المضاعف يصعد باستمرار — تسحب أرباحك متى ما أردت قبل أن «تطير» الطائرة. كل جولة عشوائية بالكامل ولا يمكن توقّعها.
+        المضاعف يصعد باستمرار — تسحب أرباحك متى ما أردت قبل أن &quot;تطير&quot; الطائرة. كل جولة عشوائية بالكامل ولا يمكن توقّعها.
       </p>
     </div>
   );
@@ -258,7 +260,7 @@ export default function Page() {
                 <br />
                 <span className="text-[var(--lime-bright)]">Aviator شرح كامل</span>
               </motion.h1>
-            <GuideByline published={GUIDES["/1xbet/aviator"].published} updated={GUIDES["/1xbet/aviator"].modified} />
+              <GuideByline published={GUIDES["/1xbet/aviator"].published} updated={GUIDES["/1xbet/aviator"].modified} />
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -317,8 +319,8 @@ export default function Page() {
             </h2>
             <div className="mt-5 space-y-3 leading-[1.7] text-[var(--muted)]">
               <p>
-                كل جولة تُحدَّد عشوائياً بالكامل (RNG) ومستقلة تماماً عن الجولات السابقة — لا يوجد «نمط» أو «توقيت مثالي»
-                يمكن تعلّمه. أي محتوى على الإنترنت يدّعي «استراتيجية مضمونة» أو «طريقة لخداع اللعبة» غير صحيح.
+                كل جولة تُحدَّد عشوائياً بالكامل (RNG) ومستقلة تماماً عن الجولات السابقة — لا يوجد &quot;نمط&quot; أو &quot;توقيت مثالي&quot;
+                يمكن تعلّمه. أي محتوى على الإنترنت يدّعي &quot;استراتيجية مضمونة&quot; أو &quot;طريقة لخداع اللعبة&quot; غير صحيح.
               </p>
               <p>
                 المنصة تملك دائماً هامش ربح إحصائي طويل الأمد (House Edge)، بمعنى أن اللعب لفترة طويلة يميل إحصائياً
@@ -326,7 +328,7 @@ export default function Page() {
                 في تحديد ميزانية مسبقة والالتزام بها.
               </p>
               <p className="font-bold text-[var(--ink)]">
-                حدد مبلغاً تتحمل خسارته بالكامل قبل البدء، ولا تحاول «تعويض» خسارة سابقة برهان أكبر.
+                حدد مبلغاً تتحمل خسارته بالكامل قبل البدء، ولا تحاول &quot;تعويض&quot; خسارة سابقة برهان أكبر.
               </p>
             </div>
           </div>

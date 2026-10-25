@@ -1,9 +1,10 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
-import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import { GuideByline } from "@/components/seo/guide-byline";
 import { GUIDES } from "@/lib/guides";
+
+import { motion, useReducedMotion } from 'framer-motion';
+import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -104,7 +105,7 @@ export default function Page() {
             </motion.h1>
             <GuideByline published={GUIDES["/pariland/tasjil"].published} updated={GUIDES["/pariland/tasjil"].modified} />
             <motion.p initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
-              className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">التسجيل في باري لاند (Pariland) للعراق 2026 يأخذ أقل من دقيقتين. قد تبحث عنه باسم باريلاند أو pari land. لا تنسَ الرمز الترويجي <strong className="text-[var(--neon-bright)]">{PROMO_CODE}</strong>.</motion.p>
+              className="mx-auto mt-5 max-w-xl text-lg leading-[1.6] text-[var(--muted)]">أقل من دقيقتين لإنشاء حسابك. لا تنسَ الرمز الترويجي <strong className="text-[var(--neon-bright)]">{PROMO_CODE}</strong>.</motion.p>
           </div>
         </div>
       </section>

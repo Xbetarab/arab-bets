@@ -3,66 +3,42 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { readAutoApprove, requireText, requireUuid } from "@/lib/input-validation";
 
 export async function deleteComment(commentId: string) {
+  commentId = requireUuid(commentId, "معرّف التعليق");
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  if (authError || !user) throw new Error("Not authenticated");
 
-  // Verify the user is the author and get post_id for count update
-  const { data: comment } = await supabase
+  // Verify ownership using the caller's RLS-bound client.
+  const { data: comment, error: commentError } = await supabase
     .from("comments")
-    .select("author_id, post_id")
+    .select("author_id")
     .eq("id", commentId)
     .single();
 
-  if (!comment || comment.author_id !== user.id) {
+  if (commentError || !comment || comment.author_id !== user.id) {
     throw new Error("غير مصرح بحذف هذا التعليق");
   }
 
-  // Delete child comments first (replies to this comment)
-  const { data: childIds } = await supabase
-    .from("comments")
-    .select("id")
-    .eq("parent_id", commentId);
-
-  if (childIds && childIds.length > 0) {
-    const ids = childIds.map((c: { id: string }) => c.id);
-    await supabase.from("comment_likes").delete().in("comment_id", ids);
-    await supabase.from("comments").delete().in("id", ids);
-  }
-
-  // Delete likes on this comment
-  await supabase.from("comment_likes").delete().eq("comment_id", commentId);
-
-  // Delete the comment
-  const { error } = await supabase
+  // Replies and likes cascade. The existing count triggers need a privileged
+  // client, created only after the authenticated ownership check above.
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
     .from("comments")
     .delete()
-    .eq("id", commentId);
+    .eq("id", commentId)
+    .eq("author_id", user.id)
+    .select("id")
+    .single();
 
   if (error) {
     console.error("deleteComment failed:", error);
-    throw new Error("فشل حذف التعليق: " + error.message);
-  }
-
-  // Decrement comments_count on the post
-  const deletedCount = 1 + (childIds?.length ?? 0);
-  // Use direct update: subtract deleted count, never go below 0
-  const { data: currentPost } = await supabase
-    .from("posts")
-    .select("comments_count")
-    .eq("id", comment.post_id)
-    .single();
-
-  if (currentPost) {
-    const newCount = Math.max(0, (currentPost.comments_count ?? 0) - deletedCount);
-    await supabase
-      .from("posts")
-      .update({ comments_count: newCount })
-      .eq("id", comment.post_id);
+    throw new Error("فشل حذف التعليق");
   }
 
   revalidatePath("/");
@@ -74,26 +50,52 @@ export async function createComment(
   content: string,
   parentId: string | null
 ) {
+  postId = requireUuid(postId, "معرّف المنشور");
+  content = requireText(content, 2000, "محتوى التعليق");
+  parentId = parentId == null ? null : requireUuid(parentId, "معرّف التعليق الأصلي");
   // Verify user is authenticated via their session
   const userClient = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await userClient.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  if (authError || !user) throw new Error("Not authenticated");
+
+  // Service-role inserts bypass RLS, so establish visibility with the session
+  // client first. Match the UI: approved content or the caller's own pending row.
+  const { data: post, error: postError } = await userClient
+    .from("posts")
+    .select("id, author_id, is_approved")
+    .eq("id", postId)
+    .maybeSingle();
+  if (postError || !post || post.id !== postId || (post.is_approved !== true && post.author_id !== user.id)) {
+    throw new Error("المنشور غير متاح للتعليق");
+  }
+
+  if (parentId) {
+    const { data: parent, error: parentError } = await userClient
+      .from("comments")
+      .select("id, post_id, author_id, is_approved")
+      .eq("id", parentId)
+      .eq("post_id", postId)
+      .maybeSingle();
+    if (parentError || !parent || parent.post_id !== postId || (parent.is_approved !== true && parent.author_id !== user.id)) {
+      throw new Error("التعليق الأصلي غير متاح في هذا المنشور");
+    }
+  }
 
   // Use admin client for insert + settings read (bypasses RLS issues)
   const adminClient = createAdminClient();
 
   // Check auto-approve setting for comments
-  const { data: settingsRow } = await adminClient
+  const { data: settingsRow, error: settingsError } = await adminClient
     .from("app_settings")
     .select("value")
     .eq("key", "moderation")
     .maybeSingle();
 
-  const autoApprove =
-    (settingsRow?.value as { auto_approve_comments?: boolean } | null)
-      ?.auto_approve_comments ?? true;
+  if (settingsError) throw new Error("تعذر التحقق من إعدادات المراجعة، حاول لاحقاً");
+  const autoApprove = readAutoApprove(settingsRow?.value, "auto_approve_comments");
 
   const { error } = await adminClient.from("comments").insert({
     post_id: postId,
@@ -105,14 +107,9 @@ export async function createComment(
 
   if (error) {
     console.error("createComment failed:", error);
-    throw error;
+    throw new Error("فشل نشر التعليق");
   }
-
-  // Only increment visible comment count if auto-approved
-  // If pending moderation, the count will be incremented when admin approves
-  if (autoApprove) {
-    await adminClient.rpc("increment_post_comments", { p_post_id: postId });
-  }
+  // The existing database INSERT trigger maintains the counter once.
 
   revalidatePath("/");
   return { success: true };

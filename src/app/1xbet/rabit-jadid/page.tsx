@@ -1,5 +1,8 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+
 /**
  * 1xBet العراق — صفحة الرابط الجديد / البديل  (/1xbet/rabit-jadid)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -18,8 +21,6 @@ import { useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
 import RelatedLinks from '../RelatedLinks';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
 
 const display = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['500', '600', '700'], variable: '--font-display' });
 const body = Changa({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -227,7 +228,7 @@ export default function Page() {
                 <span className="text-[var(--lime-bright)]">الشغّال الآن</span>
                 <span className="text-[var(--muted)]"> في العراق</span>
               </motion.h1>
-            <GuideByline published={GUIDES["/1xbet/rabit-jadid"].published} updated={GUIDES["/1xbet/rabit-jadid"].modified} />
+              <GuideByline published={GUIDES["/1xbet/rabit-jadid"].published} updated={GUIDES["/1xbet/rabit-jadid"].modified} />
 
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 14 }}

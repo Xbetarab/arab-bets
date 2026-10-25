@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
  * لا حاجة للمس أي صفحة أخرى عند التغيير.
  */
 
-const AFFILIATE_URL = 'https://plrefra.com/L?tag=d_4170992m_99567c_&site=4170992&ad=99567';
+const AFFILIATE_URL = 'https://plrefra.com/L?tag=d_4170992m_143153c_&site=4170992&ad=143153';
 
 export async function GET() {
   return NextResponse.redirect(AFFILIATE_URL, 302);

@@ -1,5 +1,10 @@
 'use client';
 
+import { GuideByline } from "@/components/seo/guide-byline";
+import { GUIDES } from "@/lib/guides";
+import { ArticleJsonLd } from "@/components/seo/article-jsonld";
+import { articleJsonLd } from "@/lib/seo";
+
 /**
  * 1xBet العراق — Pillar / Landing Page (إعادة بناء كاملة)
  * Next.js 15 (App Router) + Tailwind + Framer Motion
@@ -13,9 +18,7 @@
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Changa, IBM_Plex_Sans_Arabic } from 'next/font/google';
-import RelatedLinks from '../RelatedLinks';
-import { GuideByline } from "@/components/seo/guide-byline";
-import { GUIDES } from "@/lib/guides";
+import RelatedLinks from './RelatedLinks';
 
 const display = Changa({ subsets: ['arabic'], weight: ['600', '700', '800'], variable: '--font-display' });
 const body = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '500', '700'], variable: '--font-body' });
@@ -353,29 +356,7 @@ const faqJsonLd = {
   })),
 };
 
-const reviewJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Review',
-  itemReviewed: {
-    '@type': 'Organization',
-    name: '1xBet',
-    url: 'https://1xbet.com',
-  },
-  author: {
-    '@type': 'Organization',
-    name: 'ArabTips',
-    url: 'https://arabtips.com',
-  },
-  reviewRating: {
-    '@type': 'Rating',
-    ratingValue: '4.6',
-    bestRating: '5',
-    worstRating: '1',
-  },
-  datePublished: '2026-07-02',
-  dateModified: '2026-07-03',
-  inLanguage: 'ar',
-};
+
 
 /* ---------------------------------- الصفحة ---------------------------------- */
 
@@ -392,10 +373,7 @@ export default function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewJsonLd) }}
-      />
+      
       <style dangerouslySetInnerHTML={{ __html: tokens }} />
 
       {/* ================================ HERO ================================ */}
@@ -441,7 +419,8 @@ export default function Page() {
                 <br />
                 واسحب بزين كاش خلال دقائق
               </motion.h1>
-            <GuideByline published={GUIDES["/1xbet"].published} updated={GUIDES["/1xbet"].modified} />
+              <GuideByline published={GUIDES["/1xbet"].published} updated={GUIDES["/1xbet"].modified} />
+              <ArticleJsonLd data={articleJsonLd(GUIDES["/1xbet"])} />
 
               <motion.p
                 initial={reduce ? false : { opacity: 0, y: 20 }}

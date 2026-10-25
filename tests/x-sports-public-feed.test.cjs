@@ -16,10 +16,10 @@ function load(relative, mocks = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     fileName: filename,
   }).outputText;
-  const module = { exports: {} };
+  const cjsModule = { exports: {} };
   new Function("require", "module", "exports", js)(
-    (name) => Object.hasOwn(mocks, name) ? mocks[name] : require(name), module, module.exports);
-  return module.exports;
+    (name) => Object.hasOwn(mocks, name) ? mocks[name] : require(name), cjsModule, cjsModule.exports);
+  return cjsModule.exports;
 }
 
 function root(index, changes = {}) {

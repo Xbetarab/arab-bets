@@ -122,7 +122,6 @@ function LiveMultiplierDemo() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crashPoint, reduce]);
 
   const progress = Math.min((multiplier - 1) / (crashPoint - 1), 1);

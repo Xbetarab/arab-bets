@@ -96,7 +96,6 @@ export default function AviatorPage() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crashPoint, reduce]);
 
   const faqs = [
